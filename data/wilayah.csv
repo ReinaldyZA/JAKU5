@@ -1,0 +1,6 @@
+wilayah,ispu,kategori,lat,lon,pm25,pm10,no2,so2,co,o3
+Jakarta Pusat,81,Sedang,-6.1924,106.8232,82,52,36,34,17,16
+Jakarta Utara,74,Sedang,-6.1565,106.9056,75,52,16,45,18,22
+Jakarta Barat,81,Sedang,-6.1881,106.7567,82,52,40,28,9,34
+Jakarta Selatan,77,Sedang,-6.3349,106.827,78,46,43,59,13,21
+Jakarta Timur,68,Sedang,-6.2889,106.9105,70,58,30,30,12,24

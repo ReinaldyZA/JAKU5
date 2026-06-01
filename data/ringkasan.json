@@ -1,0 +1,14 @@
+{
+  "ispu": 76,
+  "kategori": "Sedang",
+  "pm25": 76,
+  "pm10": 52,
+  "no2": 34,
+  "so2": 34,
+  "co": 14,
+  "o3": 22,
+  "polutan_dominan": "PM2.5",
+  "polutan_dominan_nilai": 76,
+  "tanggal_update": "31 Okt 2025",
+  "tahun_data": "2024–2025"
+}
