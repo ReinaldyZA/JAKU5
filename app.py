@@ -2531,12 +2531,14 @@ def page_simulasi(data):
                 unsafe_allow_html=True,
             )
             model_label = st.selectbox(
+                "Model Klasifikasi",
                 ["XGBoost (Rekomendasi)"],
+                label_visibility="collapsed",
                 help="Dashboard ini menggunakan model XGBoost.",
                 key="sim_model_label",
             )
             st.session_state["sim_model_choice"] = "xgboost"
-
+            
             # ── Sliders 6 polutan dalam 2 kolom ──
             st.markdown(
                 "<div style='margin-top:19px;'></div>"
