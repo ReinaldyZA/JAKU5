@@ -2330,6 +2330,9 @@ def _sim_init_state():
         st.session_state["sim_active_preset"] = None
     if "sim_model_choice" not in st.session_state:
         st.session_state["sim_model_choice"] = "xgboost"
+    if "sim_submitted" not in st.session_state:
+        # Snapshot nilai yang sudah di-submit. None = belum ada hasil.
+        st.session_state["sim_submitted"] = None
 
 
 def apply_preset(name: str):
@@ -2346,14 +2349,29 @@ def apply_preset(name: str):
     st.session_state["sim_active_preset"] = name
 
 
+def submit_simulation():
+    """
+    Callback `on_click` tombol Submit. Mengambil SNAPSHOT nilai keenam slider
+    + model terpilih saat tombol ditekan, lalu menyimpannya. Hasil di panel
+    kanan dirender HANYA dari snapshot ini — jadi hasil tidak lagi berubah
+    real-time, melainkan muncul setelah user menekan Submit.
+    """
+    snap = {pol: float(st.session_state[cfg["slider_key"]])
+            for pol, cfg in SIM_SLIDER_CONFIG.items()}
+    snap["model_choice"] = st.session_state.get("sim_model_choice", "xgboost")
+    st.session_state["sim_submitted"] = snap
+
+
 def reset_simulation():
     """
     Callback `on_click` untuk tombol Reset.
-    Kembalikan semua slider ke default + hapus penanda preset aktif.
+    Kembalikan semua slider ke default + hapus penanda preset aktif + hapus
+    hasil yang sudah di-submit (panel kanan kembali ke kondisi awal).
     """
     for pol, val in SIM_DEFAULT_VALUES.items():
         st.session_state[SIM_SLIDER_CONFIG[pol]["slider_key"]] = float(val)
     st.session_state["sim_active_preset"] = None
+    st.session_state["sim_submitted"] = None
 
 
 def _detect_active_preset(current_vals: dict):
@@ -2415,6 +2433,10 @@ def page_simulasi(data):
         unsafe_allow_html=True,
     )
 
+    # PENANDA VERIFIKASI — boleh dihapus setelah konfirmasi.
+    # Jika baris hijau ini MUNCUL, berarti file terbaru (kartu sudah diperbaiki) sudah aktif.
+    st.success("✅ Layout kartu v2 aktif — kotak Komposisi Polutan & Hasil Prediksi membungkus seluruh konten.")
+
     # Banner panduan
     st.markdown(
         """
@@ -2426,7 +2448,7 @@ def page_simulasi(data):
             </div>
             <div class='step-item'>
                 <div class='step-num'>2</div>
-                <div class='step-text'>Hasil ISPU dan kategori akan ter-update secara real-time di samping kanan.</div>
+                <div class='step-text'>Tekan tombol <strong>"Lihat Hasil Prediksi"</strong> untuk menampilkan ISPU dan kategori di samping kanan.</div>
             </div>
             <div class='step-item'>
                 <div class='step-num'>3</div>
@@ -2502,6 +2524,26 @@ def page_simulasi(data):
                         on_click=apply_preset, args=(name,),
                     )
 
+            # ── Model Klasifikasi ──
+            st.markdown(
+                "<div style='margin-top:18px;'></div>"
+                "<div class='sim-section-label'>Model Klasifikasi</div>",
+                unsafe_allow_html=True,
+            )
+            model_label = st.selectbox(
+                "Model Klasifikasi",
+                ["XGBoost (Rekomendasi)", "Random Forest", "SVM"],
+                label_visibility="collapsed",
+                help="XGBoost direkomendasikan karena akurasi tertinggi pada data uji.",
+                key="sim_model_label",
+            )
+            model_choice_map = {
+                "XGBoost (Rekomendasi)": "xgboost",
+                "Random Forest": "random_forest",
+                "SVM": "svm",
+            }
+            st.session_state["sim_model_choice"] = model_choice_map[model_label]
+
             # ── Sliders 6 polutan dalam 2 kolom ──
             st.markdown(
                 "<div style='margin-top:19px;'></div>"
@@ -2524,11 +2566,19 @@ def page_simulasi(data):
             if detected != st.session_state.get("sim_active_preset"):
                 st.session_state["sim_active_preset"] = detected
 
-            # ── Tombol Info & Reset di footer card ──
+            # ── Tombol Submit, Info & Reset di footer card ──
             st.markdown(
                 "<div style='border-top:1px solid #F1F5F9; margin-top:19px; padding-top:16px;'></div>",
                 unsafe_allow_html=True,
             )
+            # Tombol utama: tampilkan hasil dari nilai slider saat ini.
+            st.button(
+                "📊 Lihat Hasil Prediksi", key="btn_submit_sim",
+                type="primary", use_container_width=True,
+                on_click=submit_simulation,
+                help="Tampilkan hasil ISPU & klasifikasi model dari nilai slider saat ini.",
+            )
+            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
             bc1, bc2, _bc3 = st.columns([1.4, 1.2, 2])
             with bc1:
                 st.markdown('<div class="reset-marker"></div>', unsafe_allow_html=True)
@@ -2536,7 +2586,7 @@ def page_simulasi(data):
                     "↺ Reset Semua", key="btn_reset",
                     type="secondary", use_container_width=True,
                     on_click=reset_simulation,
-                    help="Kembalikan semua slider ke 0 & hapus preset aktif.",
+                    help="Kembalikan semua slider ke 0 & hapus hasil.",
                 )
             with bc2:
                 if st.button("ⓘ Info Polutan", key="btn_info_simulasi", use_container_width=True):
@@ -2545,33 +2595,43 @@ def page_simulasi(data):
 
     # ─────────── KANAN: Card "Hasil Prediksi ISPU" ───────────
     with col_right:
-        # Hitung ISPU realtime tiap rerun
+        # Hasil HANYA dihitung dari snapshot yang sudah di-submit.
+        # Sebelum user menekan "Lihat Hasil Prediksi", panel menampilkan
+        # kondisi netral (Belum Ada Simulasi).
+        submitted = st.session_state.get("sim_submitted")
+        show_result = submitted is not None
+        use = submitted if show_result else {
+            "pm25": 0.0, "pm10": 0.0, "no2": 0.0, "so2": 0.0, "co": 0.0, "o3": 0.0,
+        }
+
         nilai_ispu, kategori, polutan_dominan, subindeks = calculate_ispu_category(
-            pm10=vals["pm10"], pm25=vals["pm25"], so2=vals["so2"],
-            co=vals["co"],   o3=vals["o3"],     no2=vals["no2"],
+            pm10=use["pm10"], pm25=use["pm25"], so2=use["so2"],
+            co=use["co"],   o3=use["o3"],     no2=use["no2"],
         )
 
-        try:
-            ml = prediksi_ispu_xgboost(
-                pm10=vals["pm10"], pm25=vals["pm25"], so2=vals["so2"],
-                co=vals["co"],   o3=vals["o3"],     no2=vals["no2"],
-                model_choice=st.session_state.get("sim_model_choice", "xgboost"),
-            )
-            ml_kategori   = ml.get("kategori")
-            ml_model_used = ml.get("model_used", "XGBoost")
-            ml_confidence = ml.get("confidence")
-        except Exception:
-            ml_kategori = ml_model_used = ml_confidence = None
+        ml_kategori = ml_model_used = ml_confidence = None
+        if show_result:
+            try:
+                ml = prediksi_ispu_xgboost(
+                    pm10=use["pm10"], pm25=use["pm25"], so2=use["so2"],
+                    co=use["co"],   o3=use["o3"],     no2=use["no2"],
+                    model_choice=submitted.get("model_choice", "xgboost"),
+                )
+                ml_kategori   = ml.get("kategori")
+                ml_model_used = ml.get("model_used", "XGBoost")
+                ml_confidence = ml.get("confidence")
+            except Exception:
+                ml_kategori = ml_model_used = ml_confidence = None
 
         info = KATEGORI_INFO[kategori]
-        is_neutral = (nilai_ispu == 0)
+        is_neutral = (not show_result) or (nilai_ispu == 0)
         status_text = "Belum Ada Simulasi" if is_neutral else f"Udara {kategori}"
         deskripsi_text = (
-            "Geser slider atau pilih preset untuk memulai simulasi."
+            "Atur slider lalu tekan \"Lihat Hasil Prediksi\" untuk memulai simulasi."
             if is_neutral else info["deskripsi"]
         )
         rekom_text = (
-            "Belum ada rekomendasi — silakan atur nilai polutan terlebih dahulu."
+            "Belum ada rekomendasi — atur nilai polutan lalu tekan tombol Submit."
             if is_neutral else info["rekomendasi"]
         )
         # Warna status pill: netral pakai abu, kategori valid pakai warna kategori
@@ -2579,6 +2639,17 @@ def page_simulasi(data):
             status_bg, status_color = "#F1F5F9", "#64748B"
         else:
             status_bg, status_color = info["warna_bg"], info["warna"]
+
+        # Deteksi apakah slider/model berubah sejak terakhir di-submit, supaya
+        # bisa mengingatkan user menekan Submit lagi agar hasil sinkron.
+        nilai_berubah = False
+        if show_result:
+            cur_model = st.session_state.get("sim_model_choice", "xgboost")
+            nilai_berubah = (
+                any(abs(float(st.session_state[cfg["slider_key"]]) - submitted[pol]) > 0.01
+                    for pol, cfg in SIM_SLIDER_CONFIG.items())
+                or cur_model != submitted.get("model_choice", "xgboost")
+            )
 
         with st.container(border=True):
 
@@ -2590,7 +2661,7 @@ def page_simulasi(data):
                     <div style='flex:1;'>
                         <div class='sim-card-title'>Hasil Prediksi ISPU</div>
                         <div class='sim-card-desc'>
-                            Hasil klasifikasi kualitas udara diperbarui secara real-time.
+                            Hasil klasifikasi kualitas udara berdasarkan nilai yang Anda submit.
                         </div>
                     </div>
                 </div>
@@ -2604,6 +2675,18 @@ def page_simulasi(data):
                 st.markdown(
                     f"<div class='active-preset-badge'><span class='dot'></span>"
                     f"Preset aktif: <strong>{active_name}</strong></div>",
+                    unsafe_allow_html=True,
+                )
+
+            # Pengingat: nilai slider berubah setelah hasil ditampilkan
+            if nilai_berubah:
+                st.markdown(
+                    "<div class='info-box' style='margin-bottom:14px; "
+                    "background:#FEF9C3; border-color:#FDE047;'>"
+                    "<div class='info-box-icon'>⚠</div>"
+                    "<div class='info-box-text'>Nilai polutan berubah. Tekan "
+                    "<strong>“Lihat Hasil Prediksi”</strong> lagi untuk memperbarui hasil.</div>"
+                    "</div>",
                     unsafe_allow_html=True,
                 )
 
