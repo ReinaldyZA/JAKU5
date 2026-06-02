@@ -2573,7 +2573,7 @@ def page_simulasi(data):
             )
             # Tombol utama: tampilkan hasil dari nilai slider saat ini.
             st.button(
-                "📊 Lihat Hasil Prediksi", key="btn_submit_sim",
+                "Lihat Hasil Prediksi", key="btn_submit_sim",
                 type="primary", use_container_width=True,
                 on_click=submit_simulation,
                 help="Tampilkan hasil ISPU & klasifikasi model dari nilai slider saat ini.",
