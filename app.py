@@ -629,7 +629,7 @@ def inject_css():
         margin-bottom: 9px;
         display: flex; align-items: center; gap: 6px;
     }
-    .sim-section-label::before {
+     .sim-section-label::before {
         content: ""; width: 11px; height: 1.5px;
         background: #94A3B8; border-radius: 2px;
     }
