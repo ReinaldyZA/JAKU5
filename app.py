@@ -1639,25 +1639,41 @@ def render_popup_polutan():
 # ================================================================
 def render_sidebar():
     """
-    FIX #4 — Logo lama (file logo.svg) diganti dengan SVG sprout inline.
-    Tidak bergantung file eksternal, ukuran konsisten, warna brand #0A6847.
+    Logo JakU memakai gambar vektor assets/logo_jaku.svg (di-embed base64).
+    SVG sudah memuat ikon + teks "JakU" + tagline, sehingga tajam di segala
+    ukuran dan latarnya transparan (menyatu dengan sidebar putih). Blok logo
+    lama (SVG sprout inline + teks + subtitle) diganti seluruhnya.
     """
     with st.sidebar:
-        # Logo sprout + teks "JakU" — sejajar horizontal
-        st.markdown(
-            f"""
-            <div style="display:flex; align-items:center; justify-content:center;
-                        gap:10px; padding:8px 0 3px 0;">
-                {logo_jaku_svg(size=42)}
-                <span style="font-size:30px; font-weight:800; letter-spacing:-0.02em;
-                             line-height:1;">
-                    <span style="color:#0A6847;">Jak</span><span style="color:#2563EB;">U</span>
-                </span>
-            </div>
-            <div class='sidebar-subtitle'>Pantau Udara, Jaga Jakarta</div>
-            """,
-            unsafe_allow_html=True,
-        )
+        # Logo JakU (gambar vektor utuh dari file SVG)
+        logo_svg = ASSETS_DIR / "logo_jaku.svg"
+        if logo_svg.exists():
+            svg_b64 = base64.b64encode(logo_svg.read_bytes()).decode()
+            st.markdown(
+                f"""
+                <div style="display:flex; justify-content:center; padding:10px 12px 20px;">
+                    <img src="data:image/svg+xml;base64,{svg_b64}" alt="JakU"
+                         style="width:100%; max-width:185px; height:auto; display:block;" />
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            # Fallback bila file SVG tidak ditemukan
+            st.markdown(
+                f"""
+                <div style="display:flex; align-items:center; justify-content:center;
+                            gap:10px; padding:8px 0 3px 0;">
+                    {logo_jaku_svg(size=42)}
+                    <span style="font-size:30px; font-weight:800; letter-spacing:-0.02em;
+                                 line-height:1;">
+                        <span style="color:#0052A4;">Jak</span><span style="color:#19AE5D;">U</span>
+                    </span>
+                </div>
+                <div class='sidebar-subtitle'>Pantau Udara, Jaga Jakarta</div>
+                """,
+                unsafe_allow_html=True,
+            )
 
         # Menu utama
         selected = option_menu(
