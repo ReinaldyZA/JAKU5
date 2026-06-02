@@ -629,9 +629,12 @@ def inject_css():
         margin-bottom: 9px;
         display: flex; align-items: center; gap: 6px;
     }
-     .sim-section-label::before {
-        content: ""; width: 11px; height: 1.5px;
-        background: #94A3B8; border-radius: 2px;
+     .sim-section-label {
+        font-size: 12px; font-weight: 700;
+        color: #475569;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 9px;
     }
 
     /* ============ PRESET PILLS (warna sesuai kategori ISPU) ============ */
