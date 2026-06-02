@@ -2354,9 +2354,6 @@ def _sim_init_state():
         st.session_state["sim_active_preset"] = None
     if "sim_model_choice" not in st.session_state:
         st.session_state["sim_model_choice"] = "xgboost"
-    if "sim_submitted" not in st.session_state:
-        # Snapshot nilai yang sudah di-submit. None = belum ada hasil.
-        st.session_state["sim_submitted"] = None
 
 
 def apply_preset(name: str):
@@ -2373,29 +2370,14 @@ def apply_preset(name: str):
     st.session_state["sim_active_preset"] = name
 
 
-def submit_simulation():
-    """
-    Callback `on_click` tombol Submit. Mengambil SNAPSHOT nilai keenam slider
-    + model terpilih saat tombol ditekan, lalu menyimpannya. Hasil di panel
-    kanan dirender HANYA dari snapshot ini — jadi hasil tidak lagi berubah
-    real-time, melainkan muncul setelah user menekan Submit.
-    """
-    snap = {pol: float(st.session_state[cfg["slider_key"]])
-            for pol, cfg in SIM_SLIDER_CONFIG.items()}
-    snap["model_choice"] = st.session_state.get("sim_model_choice", "xgboost")
-    st.session_state["sim_submitted"] = snap
-
-
 def reset_simulation():
     """
     Callback `on_click` untuk tombol Reset.
-    Kembalikan semua slider ke default + hapus penanda preset aktif + hapus
-    hasil yang sudah di-submit (panel kanan kembali ke kondisi awal).
+    Kembalikan semua slider ke default + hapus penanda preset aktif.
     """
     for pol, val in SIM_DEFAULT_VALUES.items():
         st.session_state[SIM_SLIDER_CONFIG[pol]["slider_key"]] = float(val)
     st.session_state["sim_active_preset"] = None
-    st.session_state["sim_submitted"] = None
 
 
 def _detect_active_preset(current_vals: dict):
@@ -2478,7 +2460,7 @@ def page_simulasi(data):
             </div>
             <div class='step-item'>
                 <div class='step-num'>2</div>
-                <div class='step-text'>Tekan tombol <strong>"Lihat Hasil Prediksi"</strong> untuk menampilkan ISPU dan kategori di samping kanan.</div>
+                <div class='step-text'>Hasil ISPU dan kategori akan muncul otomatis di samping kanan.</div>
             </div>
             <div class='step-item'>
                 <div class='step-num'>3</div>
@@ -2580,20 +2562,11 @@ def page_simulasi(data):
             if detected != st.session_state.get("sim_active_preset"):
                 st.session_state["sim_active_preset"] = detected
 
-            # ── Tombol Submit & Reset di footer card ──
+            # ── Tombol Reset di footer card (kanan bawah, sesuai Figma) ──
             st.markdown(
                 "<div style='border-top:1px solid #F1F5F9; margin-top:19px; padding-top:16px;'></div>",
                 unsafe_allow_html=True,
             )
-            # Tombol utama: tampilkan hasil dari nilai slider saat ini.
-            st.button(
-                "Lihat Hasil Prediksi", key="btn_submit_sim",
-                type="primary", use_container_width=True,
-                on_click=submit_simulation,
-                help="Tampilkan hasil ISPU & klasifikasi model dari nilai slider saat ini.",
-            )
-            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
-            # Reset di kanan bawah (sesuai Figma)
             _bc_sp, bc_reset = st.columns([2.4, 1])
             with bc_reset:
                 st.markdown('<div class="reset-marker"></div>', unsafe_allow_html=True)
@@ -2601,49 +2574,39 @@ def page_simulasi(data):
                     "Reset", key="btn_reset",
                     type="secondary", use_container_width=True,
                     on_click=reset_simulation,
-                    help="Kembalikan semua slider ke 0 & hapus hasil.",
+                    help="Kembalikan semua slider ke 0.",
                 )
 
 
     # ─────────── KANAN: Card "Hasil Prediksi ISPU" ───────────
     with col_right:
-        # Hasil HANYA dihitung dari snapshot yang sudah di-submit.
-        # Sebelum user menekan "Lihat Hasil Prediksi", panel menampilkan
-        # kondisi netral (Belum Ada Simulasi).
-        submitted = st.session_state.get("sim_submitted")
-        show_result = submitted is not None
-        use = submitted if show_result else {
-            "pm25": 0.0, "pm10": 0.0, "no2": 0.0, "so2": 0.0, "co": 0.0, "o3": 0.0,
-        }
-
+        # Hasil dihitung REAL-TIME dari nilai slider saat ini (tanpa tombol submit).
         nilai_ispu, kategori, polutan_dominan, subindeks = calculate_ispu_category(
-            pm10=use["pm10"], pm25=use["pm25"], so2=use["so2"],
-            co=use["co"],   o3=use["o3"],     no2=use["no2"],
+            pm10=vals["pm10"], pm25=vals["pm25"], so2=vals["so2"],
+            co=vals["co"],   o3=vals["o3"],     no2=vals["no2"],
         )
 
-        ml_kategori = ml_model_used = ml_confidence = None
-        if show_result:
-            try:
-                ml = prediksi_ispu_xgboost(
-                    pm10=use["pm10"], pm25=use["pm25"], so2=use["so2"],
-                    co=use["co"],   o3=use["o3"],     no2=use["no2"],
-                    model_choice=submitted.get("model_choice", "xgboost"),
-                )
-                ml_kategori   = ml.get("kategori")
-                ml_model_used = ml.get("model_used", "XGBoost")
-                ml_confidence = ml.get("confidence")
-            except Exception:
-                ml_kategori = ml_model_used = ml_confidence = None
+        try:
+            ml = prediksi_ispu_xgboost(
+                pm10=vals["pm10"], pm25=vals["pm25"], so2=vals["so2"],
+                co=vals["co"],   o3=vals["o3"],     no2=vals["no2"],
+                model_choice="xgboost",
+            )
+            ml_kategori   = ml.get("kategori")
+            ml_model_used = ml.get("model_used", "XGBoost")
+            ml_confidence = ml.get("confidence")
+        except Exception:
+            ml_kategori = ml_model_used = ml_confidence = None
 
         info = KATEGORI_INFO[kategori]
-        is_neutral = (not show_result) or (nilai_ispu == 0)
+        is_neutral = (nilai_ispu == 0)
         status_text = "Belum Ada Simulasi" if is_neutral else f"Udara {kategori}"
         deskripsi_text = (
-            "Atur slider lalu tekan \"Lihat Hasil Prediksi\" untuk memulai simulasi."
+            "Geser slider atau pilih preset untuk memulai simulasi."
             if is_neutral else info["deskripsi"]
         )
         rekom_text = (
-            "Belum ada rekomendasi — atur nilai polutan lalu tekan tombol Submit."
+            "Belum ada rekomendasi — silakan atur nilai polutan terlebih dahulu."
             if is_neutral else info["rekomendasi"]
         )
         # Warna status pill: netral pakai abu, kategori valid pakai warna kategori
@@ -2651,17 +2614,6 @@ def page_simulasi(data):
             status_bg, status_color = "#F1F5F9", "#64748B"
         else:
             status_bg, status_color = info["warna_bg"], info["warna"]
-
-        # Deteksi apakah slider/model berubah sejak terakhir di-submit, supaya
-        # bisa mengingatkan user menekan Submit lagi agar hasil sinkron.
-        nilai_berubah = False
-        if show_result:
-            cur_model = st.session_state.get("sim_model_choice", "xgboost")
-            nilai_berubah = (
-                any(abs(float(st.session_state[cfg["slider_key"]]) - submitted[pol]) > 0.01
-                    for pol, cfg in SIM_SLIDER_CONFIG.items())
-                or cur_model != submitted.get("model_choice", "xgboost")
-            )
 
         with st.container(border=True):
 
@@ -2673,7 +2625,7 @@ def page_simulasi(data):
                     <div style='flex:1;'>
                         <div class='sim-card-title'>Hasil Prediksi ISPU</div>
                         <div class='sim-card-desc'>
-                            Hasil klasifikasi kualitas udara berdasarkan nilai yang Anda submit.
+                            Hasil klasifikasi kualitas udara diperbarui secara real-time.
                         </div>
                     </div>
                 </div>
@@ -2691,18 +2643,6 @@ def page_simulasi(data):
                 st.markdown(
                     f"<div class='active-preset-badge'><span class='dot'></span>"
                     f"Preset aktif: <strong>{preset_display.get(active_name, active_name)}</strong></div>",
-                    unsafe_allow_html=True,
-                )
-
-            # Pengingat: nilai slider berubah setelah hasil ditampilkan
-            if nilai_berubah:
-                st.markdown(
-                    "<div class='info-box' style='margin-bottom:14px; "
-                    "background:#FEF9C3; border-color:#FDE047;'>"
-                    "<div class='info-box-icon'>⚠</div>"
-                    "<div class='info-box-text'>Nilai polutan berubah. Tekan "
-                    "<strong>“Lihat Hasil Prediksi”</strong> lagi untuk memperbarui hasil.</div>"
-                    "</div>",
                     unsafe_allow_html=True,
                 )
 
