@@ -2531,7 +2531,6 @@ def page_simulasi(data):
                 unsafe_allow_html=True,
             )
             model_label = st.selectbox(
-                "Model Klasifikasi",
                 ["XGBoost (Rekomendasi)"],
                 help="Dashboard ini menggunakan model XGBoost.",
                 key="sim_model_label",
