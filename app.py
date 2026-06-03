@@ -1646,26 +1646,22 @@ def render_sidebar():
     tagline, tajam di segala ukuran, latar transparan (menyatu dengan sidebar putih).
     """
     with st.sidebar:
-        # Logo JakU — SVG di-inline langsung ke HTML
+        # Ukuran logo diatur lewat LOGO_WIDTH_PX (ubah angkanya sesuka Anda).
+        LOGO_WIDTH_PX = 185
         logo_svg = ASSETS_DIR / "logo_jaku.svg"
         if logo_svg.exists():
             raw_svg = logo_svg.read_text(encoding="utf-8")
             raw_svg = re.sub(
-                r'<svg\b[^>]*?>',
-                lambda m: re.sub(r'(width|height)="[^"]*"', '', m.group(0))
-                              .replace('<svg', '<svg width="100%" height="auto"', 1),
+                r'<svg\b',
+                f'<svg style="width:{LOGO_WIDTH_PX}px; max-width:100%; '
+                f'height:auto; display:block; margin:0 auto;"',
                 raw_svg, count=1,
             )
             st.markdown(
-                f"""
-                <div style="display:flex; justify-content:center; padding:10px 12px 20px;">
-                    <div style="width:240px; max-width:100%;">{raw_svg}</div>
-                </div>
-                """,
+                f'<div style="padding:10px 12px 20px;">{raw_svg}</div>',
                 unsafe_allow_html=True,
             )
         else:
-            # Fallback bila file SVG tidak ditemukan
             st.markdown(
                 f"""
                 <div style="display:flex; align-items:center; justify-content:center;
@@ -1680,6 +1676,7 @@ def render_sidebar():
                 """,
                 unsafe_allow_html=True,
             )
+            
         # Menu utama
         selected = option_menu(
             menu_title=None,
