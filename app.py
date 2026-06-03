@@ -175,6 +175,7 @@ def inject_css():
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
         padding-top: 16px;
+        min-width: 300px;
     }
     [data-testid="stSidebar"] > div:first-child {
         padding-top: 16px;
