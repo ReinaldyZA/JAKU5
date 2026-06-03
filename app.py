@@ -2575,7 +2575,6 @@ def page_simulasi(data):
             model_label = st.selectbox(
                 "Model Klasifikasi",
                 ["XGBoost (Rekomendasi)"],
-                label_visibility="collapsed",
                 help="XGBoost direkomendasikan karena akurasi tertinggi pada data uji.",
                 key="sim_model_label",
             )
