@@ -2574,15 +2574,13 @@ def page_simulasi(data):
             )
             model_label = st.selectbox(
                 "Model Klasifikasi",
-                ["XGBoost (Rekomendasi)", "Random Forest", "SVM"],
+                ["XGBoost (Rekomendasi)"],
                 label_visibility="collapsed",
                 help="XGBoost direkomendasikan karena akurasi tertinggi pada data uji.",
                 key="sim_model_label",
             )
             model_choice_map = {
                 "XGBoost (Rekomendasi)": "xgboost",
-                "Random Forest": "random_forest",
-                "SVM": "svm",
             }
             st.session_state["sim_model_choice"] = model_choice_map[model_label]
 
