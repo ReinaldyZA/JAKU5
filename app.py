@@ -1640,21 +1640,25 @@ def render_popup_polutan():
 # ================================================================
 def render_sidebar():
     """
-    Logo JakU memakai gambar vektor assets/logo_jaku.svg (di-embed base64).
-    SVG sudah memuat ikon + teks "JakU" + tagline, sehingga tajam di segala
-    ukuran dan latarnya transparan (menyatu dengan sidebar putih). Blok logo
-    lama (SVG sprout inline + teks + subtitle) diganti seluruhnya.
+    Logo JakU memakai gambar vektor assets/logo_jaku.svg yang di-inline langsung
+    ke HTML (paling andal di Streamlit). SVG sudah memuat ikon + teks "JakU" +
+    tagline, tajam di segala ukuran, latar transparan (menyatu dengan sidebar putih).
     """
     with st.sidebar:
-        # Logo JakU (gambar vektor utuh dari file SVG)
+        # Logo JakU — SVG di-inline langsung ke HTML
         logo_svg = ASSETS_DIR / "logo_jaku.svg"
         if logo_svg.exists():
-            svg_b64 = base64.b64encode(logo_svg.read_bytes()).decode()
+            raw_svg = logo_svg.read_text(encoding="utf-8")
+            raw_svg = re.sub(
+                r'<svg\b[^>]*?>',
+                lambda m: re.sub(r'(width|height)="[^"]*"', '', m.group(0))
+                              .replace('<svg', '<svg width="100%" height="auto"', 1),
+                raw_svg, count=1,
+            )
             st.markdown(
                 f"""
                 <div style="display:flex; justify-content:center; padding:10px 12px 20px;">
-                    <img src="data:image/svg+xml;base64,{svg_b64}" alt="JakU"
-                         style="width:100%; max-width:185px; height:auto; display:block;" />
+                    <div style="width:185px; max-width:100%;">{raw_svg}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -1675,7 +1679,6 @@ def render_sidebar():
                 """,
                 unsafe_allow_html=True,
             )
-
         # Menu utama
         selected = option_menu(
             menu_title=None,
