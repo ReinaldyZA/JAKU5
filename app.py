@@ -178,16 +178,6 @@ def inject_css():
         visibility: hidden !important;
     }
 
-    /* Sembunyikan semua tombol hamburger / collapse / expand sidebar */
-    [data-testid="stSidebarCollapsedControl"],
-    [data-testid="collapsedControl"],
-    [data-testid="stExpandSidebarButton"],
-    [data-testid="stSidebarCollapseButton"] {
-        display: none !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
-    }
-
     /* ============ SIDEBAR — fixed, selalu tampil, tidak bisa disembunyikan ============ */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
@@ -1754,7 +1744,7 @@ def render_sidebar():
         # width pada <svg> (ubah angka LOGO_WIDTH_PX di bawah). Tinggi otomatis
         # proporsional (mengikuti viewBox). Catatan: lebar maksimal dibatasi
         # lebar sidebar; melebihi itu akan terpotong.
-        LOGO_WIDTH_PX = 185
+        LOGO_WIDTH_PX = 240
         logo_svg = ASSETS_DIR / "logo_jaku.svg"
         if logo_svg.exists():
             raw_svg = logo_svg.read_text(encoding="utf-8")
@@ -1765,7 +1755,7 @@ def render_sidebar():
                 raw_svg, count=1,
             )
             st.markdown(
-                f'<div style="padding:20px 20px 10px 20px;">{raw_svg}</div>',
+                f'<div style="padding:0px 20px 10px 20px;">{raw_svg}</div>',
                 unsafe_allow_html=True,
             )
         else:
