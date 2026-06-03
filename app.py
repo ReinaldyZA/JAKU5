@@ -2128,9 +2128,39 @@ def page_detail_wilayah(data):
         unsafe_allow_html=True,
     )
 
-    # Tabs wilayah — 5 wilayah berdata + "Kep. Seribu" (belum ada stasiun/data)
+    # CSS: ubah tab Streamlit menjadi pill horizontal ber-ikon (gaya Figma)
+    st.markdown(
+        """
+        <style>
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            gap: 10px; border-bottom: none; flex-wrap: wrap;
+            background: transparent; padding: 2px 0 6px;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"] {
+            border: 1.5px solid #E2E8F0; border-radius: 999px;
+            padding: 9px 20px; background: #FFFFFF; color: #475569;
+            font-weight: 600; font-size: 15px; height: auto;
+            transition: all .15s ease;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"]:hover {
+            border-color: #BFDBFE; background: #F8FAFF; color: #2563EB;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+            background: #EFF6FF; border-color: #3B82F6; color: #2563EB;
+        }
+        /* sembunyikan garis bawah & highlight bawaan tab */
+        [data-testid="stTabs"] [data-baseweb="tab-highlight"],
+        [data-testid="stTabs"] [data-baseweb="tab-border"] { display: none !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Tabs wilayah — 5 wilayah berdata + "Kep. Seribu" (belum ada stasiun/data).
+    # wilayah_list disimpan bersih (untuk lookup data); label tab diberi ikon.
     wilayah_list = data["wilayah"]["wilayah"].tolist() + ["Kep. Seribu"]
-    tabs = st.tabs(wilayah_list)
+    tab_labels = [f"🟢 {w}" for w in wilayah_list]
+    tabs = st.tabs(tab_labels)
 
     for tab, wilayah in zip(tabs, wilayah_list):
         with tab:
