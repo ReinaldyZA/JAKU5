@@ -1647,7 +1647,7 @@ def render_sidebar():
     """
     with st.sidebar:
         # Ukuran logo diatur lewat LOGO_WIDTH_PX (ubah angkanya sesuka Anda).
-        LOGO_WIDTH_PX = 185
+        LOGO_WIDTH_PX = 240
         logo_svg = ASSETS_DIR / "logo_jaku.svg"
         if logo_svg.exists():
             raw_svg = logo_svg.read_text(encoding="utf-8")
