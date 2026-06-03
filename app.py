@@ -13,6 +13,7 @@ Halaman:
 """
 
 import os
+import io
 import base64
 from pathlib import Path
 
@@ -1078,12 +1079,88 @@ def inject_css():
 # ================================================================
 @st.cache_data
 def load_data():
-    """Memuat semua data dummy."""
+    """Memuat semua data dummy (ditanam langsung di app.py, tanpa file CSV eksternal)."""
+    ispu_csv = """tanggal,ispu
+2025-10-25,44
+2025-10-26,60
+2025-10-27,61
+2025-10-28,69
+2025-10-29,74
+2025-10-30,68
+2025-10-31,69
+"""
+    wilayah_csv = """wilayah,ispu,kategori,lat,lon,pm25,pm10,no2,so2,co,o3
+Jakarta Pusat,74,Sedang,-6.1924,106.8232,73,49,35,26,18.6,19
+Jakarta Utara,75,Sedang,-6.1565,106.9056,74,53,22,47,13.8,20
+Jakarta Barat,77,Sedang,-6.1881,106.7567,77,40,20,28,15.0,40
+Jakarta Selatan,73,Sedang,-6.2615,106.8106,69,47,43,48,12.3,18
+Jakarta Timur,72,Sedang,-6.225,106.9004,69,59,17,32,16.7,22
+Kep. Seribu,42,Baik,-5.75,106.6,12,22,8,3,0.3,28
+"""
+    prediksi_csv = """tanggal,wilayah,ispu,kategori,pm25
+2024-06-16,DKI Jakarta,74,Sedang,28
+2024-06-17,DKI Jakarta,78,Sedang,31
+2024-06-18,DKI Jakarta,82,Sedang,34
+2024-06-19,DKI Jakarta,95,Sedang,41
+2024-06-20,DKI Jakarta,108,Tidak Sehat,48
+2024-06-21,DKI Jakarta,102,Tidak Sehat,45
+2024-06-22,DKI Jakarta,89,Sedang,37
+2024-06-16,Jakarta Pusat,68,Sedang,26
+2024-06-17,Jakarta Pusat,72,Sedang,29
+2024-06-18,Jakarta Pusat,108,Tidak Sehat,45
+2024-06-19,Jakarta Pusat,77,Sedang,32
+2024-06-20,Jakarta Pusat,102,Tidak Sehat,49
+2024-06-21,Jakarta Pusat,72,Sedang,45
+2024-06-22,Jakarta Pusat,60,Sedang,37
+2024-06-16,Jakarta Utara,65,Sedang,24
+2024-06-17,Jakarta Utara,70,Sedang,27
+2024-06-18,Jakarta Utara,88,Sedang,38
+2024-06-19,Jakarta Utara,75,Sedang,30
+2024-06-20,Jakarta Utara,82,Sedang,35
+2024-06-21,Jakarta Utara,69,Sedang,26
+2024-06-22,Jakarta Utara,58,Sedang,22
+2024-06-16,Jakarta Barat,102,Tidak Sehat,46
+2024-06-17,Jakarta Barat,115,Tidak Sehat,52
+2024-06-18,Jakarta Barat,125,Tidak Sehat,58
+2024-06-19,Jakarta Barat,110,Tidak Sehat,50
+2024-06-20,Jakarta Barat,118,Tidak Sehat,54
+2024-06-21,Jakarta Barat,105,Tidak Sehat,48
+2024-06-22,Jakarta Barat,95,Sedang,42
+2024-06-16,Jakarta Selatan,71,Sedang,26
+2024-06-17,Jakarta Selatan,78,Sedang,30
+2024-06-18,Jakarta Selatan,95,Sedang,42
+2024-06-19,Jakarta Selatan,82,Sedang,34
+2024-06-20,Jakarta Selatan,89,Sedang,38
+2024-06-21,Jakarta Selatan,76,Sedang,29
+2024-06-22,Jakarta Selatan,64,Sedang,24
+2024-06-16,Jakarta Timur,68,Sedang,25
+2024-06-17,Jakarta Timur,74,Sedang,28
+2024-06-18,Jakarta Timur,92,Sedang,40
+2024-06-19,Jakarta Timur,80,Sedang,33
+2024-06-20,Jakarta Timur,86,Sedang,36
+2024-06-21,Jakarta Timur,72,Sedang,27
+2024-06-22,Jakarta Timur,62,Sedang,23
+2024-06-16,Kep. Seribu,42,Baik,15
+2024-06-17,Kep. Seribu,45,Baik,16
+2024-06-18,Kep. Seribu,52,Sedang,19
+2024-06-19,Kep. Seribu,48,Baik,17
+2024-06-20,Kep. Seribu,55,Sedang,21
+2024-06-21,Kep. Seribu,44,Baik,16
+2024-06-22,Kep. Seribu,38,Baik,14
+"""
+    edukasi_csv = (
+        'kategori,rentang,deskripsi,warna,emoji\n'
+        'Baik,0-50,"Udara bersih, aman untuk beraktivitas sehari-hari.",#16A34A,😊\n'
+        'Sedang,51-100,Masih dapat diterima untuk beraktivitas luar ruangan.,#2563EB,😐\n'
+        'Tidak Sehat,101-200,"Kurangi aktivitas luar ruangan, terutama bagi kelompok sensitif.",#F59E0B,😷\n'
+        'Sangat Tidak Sehat,201-300,Hindari aktivitas luar ruangan. Gunakan masker jika harus keluar.,#EF4444,🤢\n'
+        'Berbahaya,≥ 301,Hindari semua aktivitas luar ruangan. Tetap di dalam ruangan.,#7C3AED,☠️\n'
+    )
     return {
-        "ispu":     pd.read_csv(DATA_DIR / "ispu_dummy.csv"),
-        "wilayah":  pd.read_csv(DATA_DIR / "wilayah_dummy.csv"),
-        "prediksi": pd.read_csv(DATA_DIR / "prediksi_dummy.csv"),
-        "edukasi":  pd.read_csv(DATA_DIR / "edukasi_dummy.csv"),
+        "ispu":     pd.read_csv(io.StringIO(ispu_csv)),
+        "wilayah":  pd.read_csv(io.StringIO(wilayah_csv)),
+        "prediksi": pd.read_csv(io.StringIO(prediksi_csv)),
+        "edukasi":  pd.read_csv(io.StringIO(edukasi_csv)),
     }
 
 
