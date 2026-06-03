@@ -1679,7 +1679,8 @@ def render_popup_polutan():
 # ================================================================
 # SIDEBAR
 # ================================================================
-with st.sidebar:
+def render_sidebar():
+    with st.sidebar:
         # Ukuran logo diatur lewat LOGO_WIDTH_PX (ubah angkanya sesuka Anda).
         LOGO_WIDTH_PX = 280
         logo_svg = ASSETS_DIR / "logo_jaku.svg"
