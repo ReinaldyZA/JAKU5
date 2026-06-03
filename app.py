@@ -138,11 +138,23 @@ def inject_css():
         background-color: #FAFBFC;
     }
 
+    /* Area konten utama — dorong ke kanan sejauh lebar sidebar (240px)
+       agar tidak tertimpa sidebar yang position:fixed */
+    .stApp > .stAppViewContainer > section.main,
+    section[data-testid="stMain"],
+    .main.css-uf99v8,
+    .main {
+        margin-left: 240px !important;
+        width: calc(100% - 240px) !important;
+    }
+
     /* Hilangkan top padding default */
     .block-container {
         padding-top: 24px !important;
         padding-bottom: 48px !important;
         max-width: 100% !important;
+        padding-left: 28px !important;
+        padding-right: 28px !important;
     }
 
     /* Header Streamlit transparan dan rata */
@@ -191,6 +203,8 @@ def inject_css():
         left: 0 !important;
         top: 0 !important;
         height: 100vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
         z-index: 999 !important;
     }
     /* Hilangkan ruang kosong atas bawaan Streamlit agar logo "mentok" ke atas */
