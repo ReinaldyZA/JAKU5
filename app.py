@@ -199,7 +199,7 @@ def inject_css():
 
     .sidebar-logo {
         text-align: center;
-        padding: 8px 16px 4px 16px;
+        padding: 0px 16px 4px 16px;
     }
     .sidebar-subtitle {
         text-align: center;
