@@ -1213,11 +1213,18 @@ def get_logo_b64():
     return ""
 
 
-@st.cache_data
 def rekom_img_b64(filename: str) -> str:
-    """Baca PNG rekomendasi dari assets/ lalu encode base64 (di-cache)."""
+    """Baca PNG rekomendasi dari assets/ lalu encode base64."""
+    if not filename:
+        return ""
     p = ASSETS_DIR / filename
-    return base64.b64encode(p.read_bytes()).decode() if p.exists() else ""
+    if not p.exists():
+        # Fallback: coba cari file dengan nama case-insensitive
+        for f in ASSETS_DIR.iterdir():
+            if f.name.lower() == filename.lower():
+                return base64.b64encode(f.read_bytes()).decode()
+        return ""
+    return base64.b64encode(p.read_bytes()).decode()
 
 
 def kategori_dari_ispu(ispu):
