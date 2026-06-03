@@ -2536,11 +2536,7 @@ def page_simulasi(data):
         "<div class='page-subtitle'>Simulasikan kualitas udara berdasarkan konsentrasi polutan.</div>",
         unsafe_allow_html=True,
     )
-
-    # PENANDA VERIFIKASI — boleh dihapus setelah konfirmasi.
-    # Jika baris hijau ini MUNCUL, berarti file terbaru (kartu sudah diperbaiki) sudah aktif.
-    st.success("✅ Layout kartu v2 aktif — kotak Komposisi Polutan & Hasil Prediksi membungkus seluruh konten.")
-
+    
     # Banner panduan
     st.markdown(
         """
