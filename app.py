@@ -2569,10 +2569,11 @@ def page_simulasi(data):
             # ── Model Klasifikasi ──
             st.markdown(
                 "<div style='margin-top:18px;'></div>"
-                "<div class='sim-section-label'>Model Klasifikasi</div>",
+                "<div class='sim-section-label'></div>",
                 unsafe_allow_html=True,
             )
             model_label = st.selectbox(
+             "Model Klasifikasi",
                 ["XGBoost (Rekomendasi)"],
                 help="XGBoost direkomendasikan karena akurasi tertinggi pada data uji.",
                 key="sim_model_label",
