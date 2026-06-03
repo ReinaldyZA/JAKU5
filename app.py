@@ -195,9 +195,17 @@ def inject_css():
 
     /* ============ SIDEBAR ============ */
     [data-testid="stSidebar"] {
-        background-color: #FFFFFF;
-        border-right: 1px solid #E2E8F0;
-    }
+    background-color: #FFFFFF;
+    border-right: 1px solid #E2E8F0;
+    width: 240px !important;
+    min-width: 240px !important;
+    max-width: 240px !important;
+}
+
+/* Hilangkan tombol collapse */
+[data-testid="stSidebarCollapseButton"] {
+    display: none !important;
+}
     /* Lebar tetap 240px HANYA di desktop (spesifikasi Figma). Di mobile,
        biarkan Streamlit menanganinya sebagai laci overlay agar TIDAK
        menindih konten. */
