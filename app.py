@@ -2307,6 +2307,7 @@ def page_detail_wilayah(data):
         [data-testid="stTabs"] [data-baseweb="tab-list"] {
             gap: 10px; border-bottom: none; flex-wrap: wrap;
             background: transparent; padding: 2px 0 6px;
+            width: 100%; justify-content: space-between;
         }
         [data-testid="stTabs"] [data-baseweb="tab"] {
             border: 1.5px solid #E2E8F0; border-radius: 999px;
