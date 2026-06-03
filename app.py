@@ -1658,7 +1658,7 @@ def render_sidebar():
             st.markdown(
                 f"""
                 <div style="display:flex; justify-content:center; padding:10px 12px 20px;">
-                    <div style="width:240px; max-width:100%;">{raw_svg}</div>
+                    <div style="width:600px; max-width:100%;">{raw_svg}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
