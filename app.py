@@ -175,7 +175,6 @@ def inject_css():
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
         padding-top: 16px;
-        min-width: 300px;
     }
     [data-testid="stSidebar"] > div:first-child {
         padding-top: 16px;
@@ -1641,13 +1640,17 @@ def render_popup_polutan():
 # ================================================================
 def render_sidebar():
     """
-    Logo JakU memakai gambar vektor assets/logo_jaku.svg yang di-inline langsung
-    ke HTML (paling andal di Streamlit). SVG sudah memuat ikon + teks "JakU" +
-    tagline, tajam di segala ukuran, latar transparan (menyatu dengan sidebar putih).
+    Logo JakU memakai gambar vektor assets/logo_jaku.svg (di-embed base64).
+    SVG sudah memuat ikon + teks "JakU" + tagline, sehingga tajam di segala
+    ukuran dan latarnya transparan (menyatu dengan sidebar putih). Blok logo
+    lama (SVG sprout inline + teks + subtitle) diganti seluruhnya.
     """
     with st.sidebar:
-        # Ukuran logo diatur lewat LOGO_WIDTH_PX (ubah angkanya sesuka Anda).
-        LOGO_WIDTH_PX = 300
+        # Logo JakU — SVG di-inline langsung ke HTML. Ukuran diatur lewat
+        # width pada <svg> (ubah angka LOGO_WIDTH_PX di bawah). Tinggi otomatis
+        # proporsional (mengikuti viewBox). Catatan: lebar maksimal dibatasi
+        # lebar sidebar; melebihi itu akan terpotong.
+        LOGO_WIDTH_PX = 185
         logo_svg = ASSETS_DIR / "logo_jaku.svg"
         if logo_svg.exists():
             raw_svg = logo_svg.read_text(encoding="utf-8")
@@ -1662,6 +1665,7 @@ def render_sidebar():
                 unsafe_allow_html=True,
             )
         else:
+            # Fallback bila file SVG tidak ditemukan
             st.markdown(
                 f"""
                 <div style="display:flex; align-items:center; justify-content:center;
@@ -1676,7 +1680,7 @@ def render_sidebar():
                 """,
                 unsafe_allow_html=True,
             )
-            
+
         # Menu utama
         selected = option_menu(
             menu_title=None,
@@ -2124,13 +2128,44 @@ def page_detail_wilayah(data):
         unsafe_allow_html=True,
     )
 
-    # Tabs wilayah
-    wilayah_list = data["wilayah"]["wilayah"].tolist()
+    # Tabs wilayah — 5 wilayah berdata + "Kep. Seribu" (belum ada stasiun/data)
+    wilayah_list = data["wilayah"]["wilayah"].tolist() + ["Kep. Seribu"]
     tabs = st.tabs(wilayah_list)
 
     for tab, wilayah in zip(tabs, wilayah_list):
         with tab:
-            row = data["wilayah"][data["wilayah"]["wilayah"] == wilayah].iloc[0]
+            match = data["wilayah"][data["wilayah"]["wilayah"] == wilayah]
+
+            # ── Empty state: wilayah tanpa data ISPU (mis. Kep. Seribu) ──
+            if match.empty:
+                with st.container(border=True):
+                    st.markdown(
+                        f"<div class='card-title'>Kualitas Udara {wilayah}</div>",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        """
+                        <div style="display:flex; flex-direction:column; align-items:center;
+                                    justify-content:center; text-align:center; padding:64px 20px;">
+                            <svg width="58" height="58" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="9" stroke="#3B82F6" stroke-width="1.7"/>
+                                <path d="M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6"
+                                      stroke="#3B82F6" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                            <div style="font-size:18px; font-weight:700; color:#1E293B; margin-top:20px;">
+                                Data Kualitas Udara Belum Tersedia
+                            </div>
+                            <div style="font-size:14px; color:#94A3B8; margin-top:8px; max-width:440px;">
+                                Data ISPU untuk wilayahnya saat ini belum tersedia atau belum diperbarui.
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                continue
+
+            row = match.iloc[0]
             kat = row["kategori"]
             info = KATEGORI_INFO[kat]
 
