@@ -85,6 +85,16 @@ KATEGORI_INFO = {
     },
 }
 
+# Gambar "Rekomendasi Aktivitas" (hasil desain Figma) per kategori ISPU.
+# File PNG transparan disimpan di folder assets/.
+REKOM_IMG = {
+    "Baik":               "rekom_baik.png",
+    "Sedang":             "rekom_sedang.png",
+    "Tidak Sehat":        "rekom_tidak_sehat.png",
+    "Sangat Tidak Sehat": "rekom_sangat_tidak_sehat.png",
+    "Berbahaya":          "rekom_berbahaya.png",
+}
+
 # Informasi 6 polutan untuk popup
 INFO_POLUTAN = {
     "PM2.5": {
@@ -1201,6 +1211,13 @@ def get_logo_b64():
     if logo_path.exists():
         return base64.b64encode(logo_path.read_bytes()).decode()
     return ""
+
+
+@st.cache_data
+def rekom_img_b64(filename: str) -> str:
+    """Baca PNG rekomendasi dari assets/ lalu encode base64 (di-cache)."""
+    p = ASSETS_DIR / filename
+    return base64.b64encode(p.read_bytes()).decode() if p.exists() else ""
 
 
 def kategori_dari_ispu(ispu):
@@ -2740,23 +2757,33 @@ def page_simulasi(data):
                 unsafe_allow_html=True,
             )
 
-            # Kotak Rekomendasi Aktivitas (warna mengikuti kategori)
-            st.markdown(
-                f"""
-                <div style="background:{rekom_bg}; border:1.5px solid {rekom_border};
-                            border-radius:16px; padding:18px 20px; margin-top:18px;">
-                    <div style="font-size:18px; font-weight:700; color:{rekom_color};
-                                margin-bottom:10px;">
-                        Rekomendasi Aktivitas
+            # Kotak Rekomendasi Aktivitas:
+            #  • kondisi valid → gambar PNG hasil desain Figma (per kategori)
+            #  • kondisi netral → kotak abu sederhana (belum ada desain khusus)
+            rekom_b64 = "" if is_neutral else rekom_img_b64(REKOM_IMG.get(kategori, ""))
+            if rekom_b64:
+                st.markdown(
+                    f"<img src='data:image/png;base64,{rekom_b64}' alt='Rekomendasi Aktivitas' "
+                    f"style='width:100%; height:auto; display:block; margin-top:18px;'/>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f"""
+                    <div style="background:{rekom_bg}; border:1.5px solid {rekom_border};
+                                border-radius:16px; padding:18px 20px; margin-top:18px;">
+                        <div style="font-size:18px; font-weight:700; color:{rekom_color};
+                                    margin-bottom:10px;">
+                            Rekomendasi Aktivitas
+                        </div>
+                        <div style="display:flex; gap:16px; align-items:flex-start;">
+                            <div style="font-size:30px; line-height:1.1; flex-shrink:0;">{rekom_emoji}</div>
+                            <div style="font-size:14.5px; color:#1E293B; line-height:1.6;">{rekom_text}</div>
+                        </div>
                     </div>
-                    <div style="display:flex; gap:16px; align-items:flex-start;">
-                        <div style="font-size:30px; line-height:1.1; flex-shrink:0;">{rekom_emoji}</div>
-                        <div style="font-size:14.5px; color:#1E293B; line-height:1.6;">{rekom_text}</div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                    """,
+                    unsafe_allow_html=True,
+                )
 
             # Kartu Hasil Prediksi ISPU berakhir di kotak Rekomendasi Aktivitas
             # (mengikuti mockup Figma). Bagian Sub-Indeks per Polutan & pembanding
