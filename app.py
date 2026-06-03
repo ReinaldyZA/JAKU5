@@ -145,17 +145,15 @@ def inject_css():
         max-width: 100% !important;
     }
 
-    /* Hilangkan header & footer Streamlit */
+    /* Header Streamlit transparan. JANGAN di-height:0 secara global —
+       di mobile, tombol buka-sidebar (hamburger) ada di header ini. */
     header[data-testid="stHeader"] {
         background: transparent;
-        height: 0;
     }
     #MainMenu, footer {visibility: hidden;}
 
-    /* FIX TAMBAHAN — hilangkan SEMUA chrome Streamlit yang masih muncul
-       (toolbar Share/star/edit/GitHub di kanan atas + "Manage app" di kanan bawah)
-       CATATAN: JANGAN sembunyikan button[kind="header"/"headerNoPadding"] —
-       itu tombol buka/tutup sidebar (hamburger), dibutuhkan di mobile. */
+    /* Sembunyikan HANYA chrome-nya (Deploy/toolbar/status), BUKAN seluruh
+       header — supaya tombol hamburger sidebar tetap ada di mobile. */
     [data-testid="stToolbar"],
     [data-testid="stActionButton"],
     [data-testid="stStatusWidget"],
@@ -167,31 +165,32 @@ def inject_css():
         display: none !important;
         visibility: hidden !important;
     }
-    /* Toolbar wrapper kosong tetap memakan tinggi → set 0 */
-    .stApp > header { height: 0 !important; }
 
-    /* PENTING — tombol hamburger pembuka sidebar HARUS selalu tampil,
-       terutama di mobile saat sidebar tertutup otomatis. Tanpa ini,
-       menu navigasi tidak bisa diakses sama sekali. */
+    /* Di DESKTOP sidebar selalu terbuka → header boleh dirapatkan agar tak
+       ada celah kosong di atas. Di mobile header dibiarkan agar hamburger tampil. */
+    @media (min-width: 769px) {
+        header[data-testid="stHeader"] { height: 0 !important; }
+        .stApp > header { height: 0 !important; }
+    }
+
+    /* Pastikan tombol hamburger pembuka sidebar tidak ikut tersembunyi
+       (tanpa memaksa posisi — biarkan Streamlit menempatkannya). */
     [data-testid="stSidebarCollapsedControl"],
-    [data-testid="collapsedControl"] {
+    [data-testid="collapsedControl"],
+    [data-testid="stExpandSidebarButton"] {
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
-        position: fixed !important;
-        top: 10px !important; left: 10px !important;
         z-index: 1000000 !important;
     }
     [data-testid="stSidebarCollapsedControl"] button,
-    [data-testid="collapsedControl"] button {
-        display: inline-flex !important;
-        visibility: visible !important;
+    [data-testid="collapsedControl"] button,
+    [data-testid="stExpandSidebarButton"] {
         background: #FFFFFF !important;
         border: 1px solid #E2E8F0 !important;
         border-radius: 10px !important;
         box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12) !important;
         color: #2563EB !important;
-        padding: 6px !important;
     }
 
     /* ============ SIDEBAR ============ */
@@ -1157,7 +1156,7 @@ def inject_css():
     @media (max-width: 768px) {
         .block-container {
             padding-left: 14px !important; padding-right: 14px !important;
-            padding-top: 52px !important;   /* ruang untuk tombol hamburger */
+            padding-top: 8px !important;
         }
         /* Kolom Streamlit menumpuk vertikal & memenuhi lebar di mobile */
         [data-testid="stHorizontalBlock"] { flex-direction: column; gap: 12px; }
@@ -1176,6 +1175,14 @@ def inject_css():
         [data-testid="stTabs"] [data-baseweb="tab-list"] { flex-wrap: wrap; }
         /* Sidebar (overlay di mobile) tidak melebihi viewport */
         [data-testid="stSidebar"] { max-width: 85vw !important; }
+        /* Kartu tanggal "Data terakhir diperbarui" jadi full-width di mobile */
+        .updated-card { display: block !important; width: 100% !important; }
+        /* Padding kartu lebih ringkas + jarak antar kartu konsisten */
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            padding: 16px !important; margin-bottom: 4px;
+        }
+        .page-title { font-size: clamp(22px, 6.5vw, 28px); }
+        .page-subtitle { font-size: 14px; }
     }
 
     /* ===== SMALL MOBILE (<= 480px) ===== */
