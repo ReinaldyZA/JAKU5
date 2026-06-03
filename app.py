@@ -2150,6 +2150,49 @@ def page_dashboard(data):
 # ================================================================
 # HALAMAN 2: DETAIL WILAYAH
 # ================================================================
+# Wilayah yang tab-nya tetap tampil, tetapi datanya belum tersedia.
+# Untuk wilayah ini Detail Wilayah merender "empty state" (lihat
+# render_empty_state_wilayah) sesuai mockup Figma, alih-alih kartu detail.
+WILAYAH_TANPA_DATA = {"Kep. Seribu"}
+
+
+def render_empty_state_wilayah(wilayah):
+    """
+    Empty state untuk wilayah yang data ISPU-nya belum tersedia (mis. Kep. Seribu).
+    Mengikuti mockup Figma: satu kartu berisi ikon lingkaran-silang biru,
+    judul 'Data Kualitas Udara Belum Tersedia', dan keterangan singkat.
+    """
+    circle_x_svg = (
+        '<svg width="84" height="84" viewBox="0 0 84 84" fill="none" '
+        'xmlns="http://www.w3.org/2000/svg" style="display:block;">'
+        '<circle cx="42" cy="42" r="33" stroke="#2563EB" stroke-width="3.5" fill="none"/>'
+        '<path d="M31 31 L53 53 M53 31 L31 53" stroke="#2563EB" '
+        'stroke-width="3.5" stroke-linecap="round"/>'
+        '</svg>'
+    )
+    with st.container(border=True):
+        st.markdown(
+            f"<div class='card-title'>Kualitas Udara {wilayah}</div>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f"""
+            <div style="display:flex; flex-direction:column; align-items:center;
+                        justify-content:center; text-align:center;
+                        padding:60px 20px 70px;">
+                <div style="margin-bottom:24px;">{circle_x_svg}</div>
+                <div style="font-size:18px; font-weight:700; color:#0F172A; margin-bottom:9px;">
+                    Data Kualitas Udara Belum Tersedia
+                </div>
+                <div style="font-size:13.5px; color:#94A3B8; max-width:540px; line-height:1.55;">
+                    Data ISPU untuk wilayahnya saat ini belum tersedia atau belum diperbarui.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
 def page_detail_wilayah(data):
     st.markdown(
         "<div class='page-title'>Detail Wilayah</div>"
@@ -2163,6 +2206,11 @@ def page_detail_wilayah(data):
 
     for tab, wilayah in zip(tabs, wilayah_list):
         with tab:
+            # Wilayah tanpa data → tampilkan empty state (sesuai mockup Figma)
+            if wilayah in WILAYAH_TANPA_DATA:
+                render_empty_state_wilayah(wilayah)
+                continue
+
             row = data["wilayah"][data["wilayah"]["wilayah"] == wilayah].iloc[0]
             kat = row["kategori"]
             info = KATEGORI_INFO[kat]
