@@ -178,16 +178,17 @@ def inject_css():
         min-width: 240px !important;
         max-width: 240px !important;
     }
-    /* Hapus ruang kosong bawaan Streamlit di atas sidebar (logo mentok atas) */
+    /* Hilangkan ruang kosong atas bawaan Streamlit agar logo "mentok" ke atas */
     [data-testid="stSidebar"] > div:first-child { padding-top: 0 !important; }
-    [data-testid="stSidebarUserContent"] { padding-top: 0 !important; }
-    [data-testid="stSidebarHeader"] {
+    [data-testid="stSidebarUserContent"],
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"]:first-child {
         padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        min-height: 0 !important;
-        height: 0 !important;
+        gap: 10px;                       /* Gap antar elemen = 10px (Figma) */
     }
-    section[data-testid="stSidebar"] .block-container { padding-top: 0 !important; }
+    [data-testid="stSidebarHeader"],
+    [data-testid="stSidebarCollapseButton"] {
+        padding-top: 0 !important; min-height: 0 !important;
+    }
 
     .sidebar-logo {
         text-align: center;
@@ -1096,12 +1097,64 @@ def inject_css():
         color: #0F172A;
     }
 
-    /* Responsivitas tablet/mobile */
-    @media (max-width: 768px) {
-        .ispu-number { font-size: 48px; }
-        .pollutant-value { font-size: 22px; }
+    /* ============================================================
+       RESPONSIVE — desktop, tablet, mobile, & zoom-out (50%–100%)
+       ============================================================ */
+    /* Box-sizing global + cegah horizontal-scroll tak perlu */
+    *, *::before, *::after { box-sizing: border-box; }
+    .stApp { overflow-x: hidden; }
+    /* Media & komponen mengikuti lebar container (tidak meluber) */
+    img, svg, iframe, canvas, video { max-width: 100%; }
+    [data-testid="stPlotlyChart"], .js-plotly-plot, .plot-container { width: 100% !important; }
+    iframe[title="streamlit_folium.st_folium"] { width: 100% !important; }
+
+    /* Font angka/judul besar dibuat fluid via clamp() agar proporsional
+       di semua ukuran layar & tingkat zoom (50%-100%) */
+    .ispu-number     { font-size: clamp(44px, 7vw, 72px); }
+    .hero-result-num { font-size: clamp(42px, 6.2vw, 67px); }
+    .hasil-num       { font-size: clamp(40px, 6vw, 64px); }
+    .ispu-status     { font-size: clamp(18px, 2.4vw, 24px); }
+    .ispu-emoji      { font-size: clamp(36px, 5vw, 48px); }
+    .pollutant-value { font-size: clamp(18px, 2.4vw, 26px); }
+
+    /* ===== TABLET (<= 992px) ===== */
+    @media (max-width: 992px) {
         .pollutant-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* ===== MOBILE (<= 768px) ===== */
+    @media (max-width: 768px) {
+        .block-container {
+            padding-left: 14px !important; padding-right: 14px !important;
+        }
+        /* Kolom Streamlit menumpuk vertikal & memenuhi lebar di mobile */
+        [data-testid="stHorizontalBlock"] { flex-direction: column; gap: 12px; }
+        [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
+        [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+            width: 100% !important; flex: 1 1 100% !important; min-width: 0 !important;
+        }
+        .pollutant-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .ispu-hero { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .ispu-number { font-size: clamp(40px, 13vw, 56px); }
         .step-bar { grid-template-columns: 1fr; }
+        .sim-card, .slider-card { padding: 14px; }
+        /* Tombol full-width di mobile */
+        .stButton > button { width: 100% !important; }
+        /* Tab wilayah boleh menggulung ke baris berikutnya */
+        [data-testid="stTabs"] [data-baseweb="tab-list"] { flex-wrap: wrap; }
+        /* Sidebar (overlay di mobile) tidak melebihi viewport */
+        [data-testid="stSidebar"] { max-width: 85vw !important; }
+    }
+
+    /* ===== SMALL MOBILE (<= 480px) ===== */
+    @media (max-width: 480px) {
+        .block-container {
+            padding-left: 10px !important; padding-right: 10px !important;
+        }
+        .pollutant-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .ispu-number { font-size: clamp(36px, 14vw, 48px); }
+        .pollutant-value { font-size: 18px; }
+        .page-title { font-size: clamp(20px, 6vw, 26px); }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -1659,7 +1712,7 @@ def render_sidebar():
         # width pada <svg> (ubah angka LOGO_WIDTH_PX di bawah). Tinggi otomatis
         # proporsional (mengikuti viewBox). Catatan: lebar maksimal dibatasi
         # lebar sidebar; melebihi itu akan terpotong.
-        LOGO_WIDTH_PX = 240
+        LOGO_WIDTH_PX = 185
         logo_svg = ASSETS_DIR / "logo_jaku.svg"
         if logo_svg.exists():
             raw_svg = logo_svg.read_text(encoding="utf-8")
@@ -1670,7 +1723,7 @@ def render_sidebar():
                 raw_svg, count=1,
             )
             st.markdown(
-                f'<div style="padding:0px 20px 10px 20px;">{raw_svg}</div>',
+                f'<div style="padding:20px 20px 10px 20px;">{raw_svg}</div>',
                 unsafe_allow_html=True,
             )
         else:
@@ -1812,7 +1865,7 @@ def page_dashboard(data):
                     "gap:24px; margin-top:4px;'>"
                     # Kolom kiri: angka ISPU + label
                     "<div style='flex-shrink:0;'>"
-                    f"<div style='font-size:80px; font-weight:800; "
+                    f"<div style='font-size:clamp(48px, 8vw, 80px); font-weight:800; "
                     f"line-height:0.95; letter-spacing:-0.05em; "
                     f"color:{info['warna']};'>{ispu_avg}</div>"
                     "<div style='font-size:15px; font-weight:600; "
