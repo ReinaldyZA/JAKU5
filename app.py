@@ -52,31 +52,36 @@ KATEGORI_INFO = {
         "warna": "#16A34A", "warna_bg": "#DCFCE7", "emoji": "😊",
         "rentang": "0 - 50",
         "deskripsi": "Udara bersih, aman untuk beraktivitas sehari-hari.",
-        "rekomendasi": "Cocok untuk berolahraga, jalan kaki, dan kegiatan outdoor lainnya."
+        "rekom_emoji": "🌿",
+        "rekomendasi": "Cocok untuk olahraga, jalan kaki, dan aktivitas outdoor lainnya. Nikmati udara segar dan tetap jaga pola hidup sehat."
     },
     "Sedang": {
         "warna": "#2563EB", "warna_bg": "#DBEAFE", "emoji": "😐",
         "rentang": "51 - 100",
         "deskripsi": "Masih dapat diterima untuk beraktivitas di luar ruangan.",
-        "rekomendasi": "Aman untuk beraktivitas di luar ruangan. Cocok untuk berolahraga, jalan kaki, dan kegiatan outdoor lainnya."
+        "rekom_emoji": "🚶",
+        "rekomendasi": "Cocok untuk olahraga ringan dan aktivitas harian. Gunakan masker jika sensitif terhadap polusi dan hindari paparan terlalu lama."
     },
     "Tidak Sehat": {
         "warna": "#F59E0B", "warna_bg": "#FEF3C7", "emoji": "😷",
         "rentang": "101 - 200",
         "deskripsi": "Kurangi aktivitas luar ruangan, terutama bagi kelompok sensitif.",
-        "rekomendasi": "Kurangi aktivitas di luar ruangan. Gunakan masker jika harus keluar."
+        "rekom_emoji": "⚠️",
+        "rekomendasi": "Kurangi aktivitas luar ruangan dalam waktu lama. Disarankan menggunakan masker terutama bagi anak-anak, lansia, dan penderita gangguan pernapasan."
     },
     "Sangat Tidak Sehat": {
         "warna": "#EF4444", "warna_bg": "#FEE2E2", "emoji": "🤢",
         "rentang": "201 - 300",
         "deskripsi": "Hindari aktivitas luar ruangan. Gunakan masker jika harus keluar.",
-        "rekomendasi": "Hindari semua aktivitas luar ruangan. Pakai masker N95 jika terpaksa keluar."
+        "rekom_emoji": "😷",
+        "rekomendasi": "Hindari aktivitas outdoor jika tidak mendesak. Tetap berada di dalam ruangan dan gunakan masker saat harus keluar rumah."
     },
     "Berbahaya": {
         "warna": "#7C3AED", "warna_bg": "#EDE9FE", "emoji": "☠️",
         "rentang": "≥ 301",
         "deskripsi": "Hindari semua aktivitas luar ruangan. Tetap di dalam ruangan.",
-        "rekomendasi": "Tetap di dalam ruangan. Gunakan air purifier jika tersedia."
+        "rekom_emoji": "🚨",
+        "rekomendasi": "Tetap berada di dalam ruangan dan hindari seluruh aktivitas luar. Tutup ventilasi udara dan gunakan pelindung pernapasan jika harus keluar."
     },
 }
 
@@ -2688,144 +2693,74 @@ def page_simulasi(data):
             "Belum ada rekomendasi — silakan atur nilai polutan terlebih dahulu."
             if is_neutral else info["rekomendasi"]
         )
-        # Warna status pill: netral pakai abu, kategori valid pakai warna kategori
+        # Variabel tampilan hero & kotak rekomendasi (netral = abu-abu).
         if is_neutral:
-            status_bg, status_color = "#F1F5F9", "#64748B"
+            hero_warna = "#94A3B8"
+            hero_emoji_svg = (
+                '<svg width="64" height="64" viewBox="0 0 100 100" '
+                'xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">'
+                '<circle cx="50" cy="50" r="46" fill="#CBD5E1"/>'
+                '<circle cx="36" cy="42" r="4" fill="white"/>'
+                '<circle cx="64" cy="42" r="4" fill="white"/>'
+                '<line x1="35" y1="60" x2="65" y2="60" stroke="white" '
+                'stroke-width="5" stroke-linecap="round"/></svg>'
+            )
+            rekom_bg, rekom_border, rekom_color = "#F8FAFC", "#CBD5E1", "#64748B"
+            rekom_emoji = "🧭"
         else:
-            status_bg, status_color = info["warna_bg"], info["warna"]
+            hero_warna = info["warna"]
+            hero_emoji_svg = ispu_emoji_svg(kategori, size=64)
+            rekom_bg, rekom_border, rekom_color = info["warna_bg"], info["warna"], info["warna"]
+            rekom_emoji = info["rekom_emoji"]
 
         with st.container(border=True):
 
-            # Header card
+            # Judul card
             st.markdown(
-                """
-                <div class='sim-card-header'>
-                    <div class='sim-card-icon icon-result'>📊</div>
-                    <div style='flex:1;'>
-                        <div class='sim-card-title'>Hasil Prediksi ISPU</div>
-                        <div class='sim-card-desc'>
-                            Hasil klasifikasi kualitas udara diperbarui secara real-time.
-                        </div>
-                    </div>
-                </div>
-                """,
+                "<div class='card-title'>Hasil Prediksi ISPU</div>",
                 unsafe_allow_html=True,
             )
 
-            # Badge preset aktif
-            active_name = st.session_state.get("sim_active_preset")
-            if active_name:
-                st.markdown(
-                    f"<div class='active-preset-badge'><span class='dot'></span>"
-                    f"Preset aktif: <strong>{active_name}</strong></div>",
-                    unsafe_allow_html=True,
-                )
-
-            # Hero result block (status pill + angka ISPU besar + deskripsi)
+            # Hero: angka ISPU (kiri) + emoji + status & deskripsi
             st.markdown(
                 f"""
-                <div class='hero-result sim-fade'>
-                    <div class='hero-status-pill'
-                         style='background:{status_bg}; color:{status_color};'>
-                        <span class='hero-emoji-inline'>{info["emoji"]}</span>
-                        {status_text}
+                <div style="display:flex; align-items:center; gap:22px;
+                            margin-top:8px; margin-bottom:4px; flex-wrap:wrap;">
+                    <div style="flex-shrink:0;">
+                        <div class='ispu-number' style='color:{hero_warna};'>{nilai_ispu:.0f}</div>
+                        <div class='ispu-label' style='text-align:center;'>ISPU</div>
                     </div>
-                    <div class='hero-result-num' style='color:{info["warna"]};'>
-                        {nilai_ispu:.0f}
+                    <div class='ispu-emoji' style='margin-bottom:0;'>{hero_emoji_svg}</div>
+                    <div style="flex:1; min-width:180px;">
+                        <div class='ispu-status' style='color:{hero_warna};'>{status_text}</div>
+                        <div class='ispu-desc'>{deskripsi_text}</div>
                     </div>
-                    <div class='hero-result-label'>Indeks Standar Pencemar Udara</div>
-                    <div class='hero-result-desc'>{deskripsi_text}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-            # Rekomendasi modern box
+            # Kotak Rekomendasi Aktivitas (warna mengikuti kategori)
             st.markdown(
                 f"""
-                <div class='rekom-modern sim-fade'
-                     style='background:{info["warna_bg"]};
-                            border-color:{info["warna"]}40;'>
-                    <div class='rekom-modern-icon'
-                         style='background:{info["warna"]}; color:#FFFFFF;'>ⓘ</div>
-                    <div style='flex:1;'>
-                        <div class='rekom-modern-title' style='color:{info["warna"]};'>
-                            Rekomendasi Aktivitas
-                        </div>
-                        <div class='rekom-modern-text'>{rekom_text}</div>
+                <div style="background:{rekom_bg}; border:1.5px solid {rekom_border};
+                            border-radius:16px; padding:18px 20px; margin-top:18px;">
+                    <div style="font-size:18px; font-weight:700; color:{rekom_color};
+                                margin-bottom:10px;">
+                        Rekomendasi Aktivitas
+                    </div>
+                    <div style="display:flex; gap:16px; align-items:flex-start;">
+                        <div style="font-size:30px; line-height:1.1; flex-shrink:0;">{rekom_emoji}</div>
+                        <div style="font-size:14.5px; color:#1E293B; line-height:1.6;">{rekom_text}</div>
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-            # ── Sub-Indeks per Polutan dengan progress bars ──
-            rows_html = ""
-            for pol, sub_val in sorted(subindeks.items(), key=lambda kv: -kv[1]):
-                is_dom = (not is_neutral) and (pol == polutan_dominan)
-                sub_kategori = get_ispu_category(sub_val)
-                sub_info = KATEGORI_INFO[sub_kategori]
-                sub_warna = sub_info["warna"]
-                sub_warna_bg = sub_info["warna_bg"]
-                # Progress bar width (0-500 scale)
-                bar_pct = min(100.0, (sub_val / 500.0) * 100.0)
-                # CSS class & badge
-                dom_cls = " dominan" if is_dom else ""
-                dom_badge = (
-                    "<span class='dom-badge' title='Polutan dominan'>⚠ DOMINAN</span>"
-                    if is_dom else ""
-                )
-                if is_neutral:
-                    kat_pill = ""
-                else:
-                    kat_pill = (
-                        f"<span class='kat-pill' style='background:{sub_warna_bg}; "
-                        f"color:{sub_warna}; border-color:{sub_warna}30;'>"
-                        f"{sub_kategori}</span>"
-                    )
-                rows_html += (
-                    f"<div class='subindex-bar-card{dom_cls}'>"
-                    f"  <div class='subindex-bar-head'>"
-                    f"    <span class='subindex-bar-name'>{POLUTAN_DISPLAY_NAME[pol]}{dom_badge}</span>"
-                    f"    <span class='subindex-bar-val'>{sub_val:.1f}</span>"
-                    f"  </div>"
-                    f"  <div class='subindex-bar-track'>"
-                    f"    <div class='subindex-bar-fill' "
-                    f"         style='width:{bar_pct:.1f}%; background:{sub_warna};'></div>"
-                    f"  </div>"
-                    f"  <div class='subindex-bar-foot'>{kat_pill}</div>"
-                    f"</div>"
-                )
-
-            st.markdown(
-                f"""
-                <div class='subindex-section sim-fade'>
-                    <div class='subindex-section-title'>
-                        <span>Sub-Indeks per Polutan</span>
-                        <span class='subindex-section-hint'>skala 0 — 500</span>
-                    </div>
-                    {rows_html}
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            # Pembanding klasifikasi Model ML
-            if ml_kategori is not None and not is_neutral:
-                conf_txt = f" (keyakinan {ml_confidence*100:.1f}%)" if ml_confidence is not None else ""
-                st.markdown(
-                    f"""
-                    <div class='info-box' style='margin-top:16px;'>
-                        <div class='info-box-icon'>ⓘ</div>
-                        <div class='info-box-text'>
-                            ISPU dihitung dengan formula sub-indeks PerMenLHK 14/2020.<br>
-                            Klasifikasi model <strong>{ml_model_used}</strong>:
-                            <strong>{ml_kategori}</strong>{conf_txt}.
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+            # Kartu Hasil Prediksi ISPU berakhir di kotak Rekomendasi Aktivitas
+            # (mengikuti mockup Figma). Bagian Sub-Indeks per Polutan & pembanding
+            # model ML dihilangkan agar tampilan sama persis dengan desain.
 
 
 
