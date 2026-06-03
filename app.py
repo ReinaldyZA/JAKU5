@@ -14,6 +14,7 @@ Halaman:
 
 import os
 import io
+import re
 import base64
 from pathlib import Path
 
@@ -1679,25 +1680,46 @@ def render_popup_polutan():
 # ================================================================
 def render_sidebar():
     """
-    FIX #4 — Logo lama (file logo.svg) diganti dengan SVG sprout inline.
-    Tidak bergantung file eksternal, ukuran konsisten, warna brand #0A6847.
+    Logo JakU memakai gambar vektor assets/logo_jaku.svg yang di-inline langsung
+    ke HTML (paling andal di Streamlit). SVG sudah memuat ikon + teks "JakU" +
+    tagline, tajam di segala ukuran, latar transparan (menyatu dengan sidebar putih).
     """
     with st.sidebar:
-        # Logo sprout + teks "JakU" — sejajar horizontal
-        st.markdown(
-            f"""
-            <div style="display:flex; align-items:center; justify-content:center;
-                        gap:10px; padding:8px 0 3px 0;">
-                {logo_jaku_svg(size=42)}
-                <span style="font-size:30px; font-weight:800; letter-spacing:-0.02em;
-                             line-height:1;">
-                    <span style="color:#0A6847;">Jak</span><span style="color:#2563EB;">U</span>
-                </span>
-            </div>
-            <div class='sidebar-subtitle'>Pantau Udara, Jaga Jakarta</div>
-            """,
-            unsafe_allow_html=True,
-        )
+        # Logo JakU — SVG di-inline langsung ke HTML
+        logo_svg = ASSETS_DIR / "logo_jaku.svg"
+        if logo_svg.exists():
+            raw_svg = logo_svg.read_text(encoding="utf-8")
+            raw_svg = re.sub(
+                r'<svg\b[^>]*?>',
+                lambda m: re.sub(r'(width|height)="[^"]*"', '', m.group(0))
+                              .replace('<svg', '<svg width="100%" height="auto"', 1),
+                raw_svg, count=1,
+            )
+            st.markdown(
+                f"""
+                <div style="display:flex; justify-content:center; padding:10px 12px 20px;">
+                    <div style="width:185px; max-width:100%;">{raw_svg}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            # Fallback bila file SVG tidak ditemukan
+            st.markdown(
+                f"""
+                <div style="display:flex; align-items:center; justify-content:center;
+                            gap:10px; padding:8px 0 3px 0;">
+                    {logo_jaku_svg(size=42)}
+                    <span style="font-size:30px; font-weight:800; letter-spacing:-0.02em;
+                                 line-height:1;">
+                        <span style="color:#0052A4;">Jak</span><span style="color:#19AE5D;">U</span>
+                    </span>
+                </div>
+                <div class='sidebar-subtitle'>Pantau Udara, Jaga Jakarta</div>
+                """,
+                unsafe_allow_html=True,
+            )
+
 
         # Menu utama
         selected = option_menu(
