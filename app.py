@@ -190,16 +190,16 @@ def inject_css():
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
-        padding-top: 0px;
+        padding-top: 16px;
         min-width: 300px;
     }
     [data-testid="stSidebar"] > div:first-child {
-        padding-top: 0px;
+        padding-top: 16px;
     }
 
     .sidebar-logo {
         text-align: center;
-        padding: 0px 16px 4px 16px;
+        padding: 8px 16px 4px 16px;
     }
     .sidebar-subtitle {
         text-align: center;
