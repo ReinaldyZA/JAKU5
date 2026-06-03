@@ -190,7 +190,7 @@ def inject_css():
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
-        padding-top: 16px;
+        padding-top: 0px;
         min-width: 300px;
     }
     [data-testid="stSidebar"] > div:first-child {
