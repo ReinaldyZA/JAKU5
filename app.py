@@ -13,6 +13,7 @@ Halaman:
 """
 
 import os
+import re
 import base64
 from pathlib import Path
 
@@ -33,7 +34,7 @@ st.set_page_config(
     page_title="JakU - Dashboard Kualitas Udara",
     page_icon="🌤️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 # ================================================================
@@ -144,39 +145,79 @@ def inject_css():
         max-width: 100% !important;
     }
 
-    /* Hilangkan header & footer Streamlit */
+    /* Header Streamlit transparan. JANGAN di-height:0 secara global —
+       di mobile, tombol buka-sidebar (hamburger) ada di header ini. */
     header[data-testid="stHeader"] {
         background: transparent;
-        height: 0;
     }
     #MainMenu, footer {visibility: hidden;}
 
-    /* FIX TAMBAHAN — hilangkan SEMUA chrome Streamlit yang masih muncul
-       (toolbar Share/star/edit/GitHub di kanan atas + "Manage app" di kanan bawah) */
+    /* Sembunyikan HANYA chrome-nya (Deploy/toolbar/status), BUKAN seluruh
+       header — supaya tombol hamburger sidebar tetap ada di mobile. */
     [data-testid="stToolbar"],
     [data-testid="stActionButton"],
     [data-testid="stStatusWidget"],
     [data-testid="stDecoration"],
     .stDeployButton,
     .stAppDeployButton,
-    button[kind="header"],
-    button[kind="headerNoPadding"],
     div[class*="viewerBadge"],
     iframe[title="streamlit_app"] {
         display: none !important;
         visibility: hidden !important;
     }
-    /* Toolbar wrapper kosong tetap memakan tinggi → set 0 */
-    .stApp > header { height: 0 !important; }
+
+    /* Di DESKTOP sidebar selalu terbuka → header boleh dirapatkan agar tak
+       ada celah kosong di atas. Di mobile header dibiarkan agar hamburger tampil. */
+    @media (min-width: 769px) {
+        header[data-testid="stHeader"] { height: 0 !important; }
+        .stApp > header { height: 0 !important; }
+    }
+
+    /* Pastikan tombol hamburger pembuka sidebar tidak ikut tersembunyi
+       (tanpa memaksa posisi — biarkan Streamlit menempatkannya). */
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="collapsedControl"],
+    [data-testid="stExpandSidebarButton"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 1000000 !important;
+    }
+    [data-testid="stSidebarCollapsedControl"] button,
+    [data-testid="collapsedControl"] button,
+    [data-testid="stExpandSidebarButton"] {
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 10px !important;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12) !important;
+        color: #2563EB !important;
+    }
 
     /* ============ SIDEBAR ============ */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
-        padding-top: 16px;
     }
-    [data-testid="stSidebar"] > div:first-child {
-        padding-top: 16px;
+    /* Lebar tetap 240px HANYA di desktop (spesifikasi Figma). Di mobile,
+       biarkan Streamlit menanganinya sebagai laci overlay agar TIDAK
+       menindih konten. */
+    @media (min-width: 769px) {
+        [data-testid="stSidebar"] {
+            width: 240px !important;
+            min-width: 240px !important;
+            max-width: 240px !important;
+        }
+    }
+    /* Hilangkan ruang kosong atas bawaan Streamlit agar logo "mentok" ke atas */
+    [data-testid="stSidebar"] > div:first-child { padding-top: 0 !important; }
+    [data-testid="stSidebarUserContent"],
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"]:first-child {
+        padding-top: 0 !important;
+        gap: 10px;                       /* Gap antar elemen = 10px (Figma) */
+    }
+    [data-testid="stSidebarHeader"],
+    [data-testid="stSidebarCollapseButton"] {
+        padding-top: 0 !important; min-height: 0 !important;
     }
 
     .sidebar-logo {
@@ -627,11 +668,6 @@ def inject_css():
         letter-spacing: 0.06em;
         text-transform: uppercase;
         margin-bottom: 9px;
-        display: flex; align-items: center; gap: 6px;
-    }
-    .sim-section-label::before {
-        content: ""; width: 11px; height: 1.5px;
-        background: #94A3B8; border-radius: 2px;
     }
 
     /* ============ PRESET PILLS (warna sesuai kategori ISPU) ============ */
@@ -702,24 +738,53 @@ def inject_css():
         font-weight: 700 !important; transform: translateY(-1px);
     }
 
-    /* ============ RESET BUTTON — :has() selector ============ */
+    /* ============ RESET BUTTON — :has() selector (gaya Figma: outline) ============ */
     [data-testid="stElementContainer"]:has(.reset-marker) + [data-testid="stElementContainer"] button[kind="secondary"] {
         background: #FFFFFF !important;
-        border: 1.5px solid #FCA5A5 !important;
-        color: #B91C1C !important;
+        border: 1.5px solid #CBD5E1 !important;
+        color: #2563EB !important;
         font-weight: 600 !important;
-        border-radius: 12px !important;
-        padding: 9px 19px !important;
+        border-radius: 999px !important;
+        padding: 9px 28px !important;
         font-size: 14px !important;
         transition: all 0.2s ease-in-out !important;
     }
     [data-testid="stElementContainer"]:has(.reset-marker) + [data-testid="stElementContainer"] button[kind="secondary"]:hover {
-        background: #FEF2F2 !important;
-        border-color: #EF4444 !important;
-        color: #991B1B !important;
-        box-shadow: 0 4px 12px -2px rgba(239, 68, 68, 0.25) !important;
+        background: #EFF6FF !important;
+        border-color: #2563EB !important;
+        color: #1D4ED8 !important;
+        box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.20) !important;
         transform: translateY(-1px);
     }
+
+    /* ============ TAMBAHAN GAYA FIGMA ============ */
+    /* Judul section title-case gelap (mis. "Preset Skenario Udara") */
+    .sim-heading {
+        font-size: 16px; font-weight: 700; color: #1E293B;
+        margin: 6px 0 13px; letter-spacing: -0.01em;
+    }
+    /* Tombol "Lihat Penjelasan Polutan" — pill outline biru di header */
+    [data-testid="stElementContainer"]:has(.penjelasan-marker) + [data-testid="stElementContainer"] button[kind="secondary"] {
+        border-radius: 999px !important;
+        border: 1.5px solid #3B82F6 !important;
+        background: #FFFFFF !important;
+        color: #2563EB !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        padding: 8px 18px !important;
+        transition: all .2s ease;
+    }
+    [data-testid="stElementContainer"]:has(.penjelasan-marker) + [data-testid="stElementContainer"] button[kind="secondary"]:hover {
+        background: #EFF6FF !important; border-color: #2563EB !important;
+    }
+    /* Label min–max kustom di bawah slider (integer, gaya Figma) */
+    .slider-minmax {
+        display: flex; justify-content: space-between;
+        font-size: 12px; color: #94A3B8; font-weight: 500;
+        margin-top: -2px; padding: 0 3px 2px;
+    }
+    /* Sembunyikan label tick bawaan Streamlit (0.00 / 500.00) */
+    [data-testid="stSliderTickBarMin"], [data-testid="stSliderTickBarMax"] { display: none !important; }
 
     /* ============ SLIDER MINI-CARDS ============ */
     .slider-card {
@@ -1062,12 +1127,90 @@ def inject_css():
         color: #0F172A;
     }
 
-    /* Responsivitas tablet/mobile */
-    @media (max-width: 768px) {
-        .ispu-number { font-size: 48px; }
-        .pollutant-value { font-size: 22px; }
+    /* ============================================================
+       RESPONSIVE — desktop, tablet, mobile, & zoom-out (50%–100%)
+       ============================================================ */
+    /* Box-sizing global + cegah horizontal-scroll tak perlu */
+    *, *::before, *::after { box-sizing: border-box; }
+    .stApp { overflow-x: hidden; }
+    /* Media & komponen mengikuti lebar container (tidak meluber) */
+    img, svg, iframe, canvas, video { max-width: 100%; }
+    [data-testid="stPlotlyChart"], .js-plotly-plot, .plot-container { width: 100% !important; }
+    iframe[title="streamlit_folium.st_folium"] { width: 100% !important; }
+
+    /* Font angka/judul besar dibuat fluid via clamp() agar proporsional
+       di semua ukuran layar & tingkat zoom (50%-100%) */
+    .ispu-number     { font-size: clamp(44px, 7vw, 72px); }
+    .hero-result-num { font-size: clamp(42px, 6.2vw, 67px); }
+    .hasil-num       { font-size: clamp(40px, 6vw, 64px); }
+    .ispu-status     { font-size: clamp(18px, 2.4vw, 24px); }
+    .ispu-emoji      { font-size: clamp(36px, 5vw, 48px); }
+    .pollutant-value { font-size: clamp(18px, 2.4vw, 26px); }
+
+    /* ===== TABLET (<= 992px) ===== */
+    @media (max-width: 992px) {
         .pollutant-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* Top-nav (menu mobile) disembunyikan di desktop — sidebar yang dipakai */
+    [data-testid="stElementContainer"]:has(.topnav-marker) + [data-testid="stElementContainer"] {
+        display: none;
+    }
+
+    /* ===== MOBILE (<= 768px) ===== */
+    @media (max-width: 768px) {
+        .block-container {
+            padding-left: 14px !important; padding-right: 14px !important;
+            padding-top: 8px !important;
+        }
+        /* Kolom Streamlit menumpuk vertikal & memenuhi lebar di mobile */
+        [data-testid="stHorizontalBlock"] { flex-direction: column; gap: 12px; }
+        [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
+        [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+            width: 100% !important; flex: 1 1 100% !important; min-width: 0 !important;
+        }
+        .pollutant-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .ispu-hero { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .ispu-number { font-size: clamp(40px, 13vw, 56px); }
         .step-bar { grid-template-columns: 1fr; }
+        .sim-card, .slider-card { padding: 14px; }
+        /* Tombol full-width di mobile */
+        .stButton > button { width: 100% !important; }
+        /* Tab wilayah boleh menggulung ke baris berikutnya */
+        [data-testid="stTabs"] [data-baseweb="tab-list"] { flex-wrap: wrap; }
+        /* Sidebar (overlay di mobile) tidak melebihi viewport */
+        [data-testid="stSidebar"] { max-width: 85vw !important; }
+        /* ── NAVIGASI MOBILE ──
+           Tampilkan top-nav horizontal, sembunyikan sidebar + tombolnya.
+           Navigasi jadi selalu terlihat tanpa perlu tombol hamburger. */
+        [data-testid="stElementContainer"]:has(.topnav-marker) + [data-testid="stElementContainer"] {
+            display: block !important;
+        }
+        [data-testid="stSidebar"],
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="collapsedControl"],
+        [data-testid="stExpandSidebarButton"] {
+            display: none !important;
+        }
+        /* Kartu tanggal "Data terakhir diperbarui" jadi full-width di mobile */
+        .updated-card { display: block !important; width: 100% !important; }
+        /* Padding kartu lebih ringkas + jarak antar kartu konsisten */
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            padding: 16px !important; margin-bottom: 4px;
+        }
+        .page-title { font-size: clamp(22px, 6.5vw, 28px); }
+        .page-subtitle { font-size: 14px; }
+    }
+
+    /* ===== SMALL MOBILE (<= 480px) ===== */
+    @media (max-width: 480px) {
+        .block-container {
+            padding-left: 10px !important; padding-right: 10px !important;
+        }
+        .pollutant-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .ispu-number { font-size: clamp(36px, 14vw, 48px); }
+        .pollutant-value { font-size: 18px; }
+        .page-title { font-size: clamp(20px, 6vw, 26px); }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -1611,41 +1754,116 @@ def render_popup_polutan():
 
 
 # ================================================================
+# NAVIGASI (sidebar untuk desktop + top-nav untuk mobile)
+# ================================================================
+# Satu sumber kebenaran halaman aktif: st.session_state["nav_page"].
+# Di desktop dipakai sidebar; di mobile sidebar disembunyikan dan
+# navigasi memakai menu horizontal di atas konten (selalu terlihat,
+# tidak bergantung pada tombol hamburger Streamlit).
+NAV_OPTIONS = ["Dashboard", "Detail Wilayah", "Simulasi Prediksi ISPU", "Edukasi & Insight"]
+NAV_ICONS = ["grid", "geo-alt", "bar-chart", "book"]
+
+
+def _nav_current_index():
+    page = st.session_state.get("nav_page", NAV_OPTIONS[0])
+    return NAV_OPTIONS.index(page) if page in NAV_OPTIONS else 0
+
+
+def _sync_nav_from_side(*_):
+    """Callback option_menu sidebar → set halaman aktif."""
+    st.session_state["nav_page"] = st.session_state.get("nav_side", NAV_OPTIONS[0])
+
+
+def _sync_nav_from_top(*_):
+    """Callback option_menu top-nav (mobile) → set halaman aktif."""
+    st.session_state["nav_page"] = st.session_state.get("nav_top", NAV_OPTIONS[0])
+
+
+def render_top_nav():
+    """
+    Menu navigasi horizontal di atas konten — TAMPIL HANYA DI MOBILE
+    (disembunyikan di desktop via CSS). Memberi akses navigasi yang pasti
+    terlihat di HP tanpa bergantung pada tombol buka-sidebar.
+    """
+    # Marker untuk hook CSS show/hide (pola sama seperti tombol preset).
+    st.markdown('<div class="topnav-marker"></div>', unsafe_allow_html=True)
+    option_menu(
+        menu_title=None,
+        options=NAV_OPTIONS,
+        icons=NAV_ICONS,
+        default_index=_nav_current_index(),
+        orientation="horizontal",
+        key="nav_top",
+        on_change=_sync_nav_from_top,
+        styles={
+            "container": {"padding": "4px", "background-color": "#FFFFFF",
+                          "border": "1px solid #E2E8F0", "border-radius": "14px",
+                          "margin-bottom": "12px"},
+            "icon": {"font-size": "15px"},
+            "nav-link": {"font-size": "13px", "font-weight": "600",
+                         "color": "#475569", "padding": "9px 10px",
+                         "margin": "2px", "border-radius": "10px",
+                         "--hover-color": "#F1F5F9"},
+            "nav-link-selected": {"background-color": "#DBEAFE",
+                                  "color": "#2563EB", "font-weight": "700"},
+        },
+    )
+
+
+# ================================================================
 # SIDEBAR
 # ================================================================
 def render_sidebar():
     """
-    FIX #4 — Logo lama (file logo.svg) diganti dengan SVG sprout inline.
-    Tidak bergantung file eksternal, ukuran konsisten, warna brand #0A6847.
+    Logo JakU memakai gambar vektor assets/logo_jaku.svg (di-embed base64).
+    SVG sudah memuat ikon + teks "JakU" + tagline, sehingga tajam di segala
+    ukuran dan latarnya transparan (menyatu dengan sidebar putih). Blok logo
+    lama (SVG sprout inline + teks + subtitle) diganti seluruhnya.
     """
     with st.sidebar:
-        # Logo sprout + teks "JakU" — sejajar horizontal
-        st.markdown(
-            f"""
-            <div style="display:flex; align-items:center; justify-content:center;
-                        gap:10px; padding:8px 0 3px 0;">
-                {logo_jaku_svg(size=42)}
-                <span style="font-size:30px; font-weight:800; letter-spacing:-0.02em;
-                             line-height:1;">
-                    <span style="color:#0A6847;">Jak</span><span style="color:#2563EB;">U</span>
-                </span>
-            </div>
-            <div class='sidebar-subtitle'>Pantau Udara, Jaga Jakarta</div>
-            """,
-            unsafe_allow_html=True,
-        )
+        # Logo JakU — SVG di-inline langsung ke HTML. Ukuran diatur lewat
+        # width pada <svg> (ubah angka LOGO_WIDTH_PX di bawah). Tinggi otomatis
+        # proporsional (mengikuti viewBox). Catatan: lebar maksimal dibatasi
+        # lebar sidebar; melebihi itu akan terpotong.
+        LOGO_WIDTH_PX = 185
+        logo_svg = ASSETS_DIR / "logo_jaku.svg"
+        if logo_svg.exists():
+            raw_svg = logo_svg.read_text(encoding="utf-8")
+            raw_svg = re.sub(
+                r'<svg\b',
+                f'<svg style="width:{LOGO_WIDTH_PX}px; max-width:100%; '
+                f'height:auto; display:block; margin:0 auto;"',
+                raw_svg, count=1,
+            )
+            st.markdown(
+                f'<div style="padding:20px 20px 10px 20px;">{raw_svg}</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            # Fallback bila file SVG tidak ditemukan
+            st.markdown(
+                f"""
+                <div style="display:flex; align-items:center; justify-content:center;
+                            gap:10px; padding:8px 0 3px 0;">
+                    {logo_jaku_svg(size=42)}
+                    <span style="font-size:30px; font-weight:800; letter-spacing:-0.02em;
+                                 line-height:1;">
+                        <span style="color:#0052A4;">Jak</span><span style="color:#19AE5D;">U</span>
+                    </span>
+                </div>
+                <div class='sidebar-subtitle'>Pantau Udara, Jaga Jakarta</div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-        # Menu utama
+        # Menu utama (desktop) — sinkron ke nav_page lewat callback
         selected = option_menu(
             menu_title=None,
-            options=[
-                "Dashboard",
-                "Detail Wilayah",
-                "Simulasi Prediksi ISPU",
-                "Edukasi & Insight",
-            ],
-            icons=["grid", "geo-alt", "bar-chart", "book"],
-            default_index=0,
+            options=NAV_OPTIONS,
+            icons=NAV_ICONS,
+            default_index=_nav_current_index(),
+            key="nav_side",
+            on_change=_sync_nav_from_side,
             styles={
                 "container": {
                     "padding": "4px 8px",
@@ -1757,7 +1975,7 @@ def page_dashboard(data):
                     "gap:24px; margin-top:4px;'>"
                     # Kolom kiri: angka ISPU + label
                     "<div style='flex-shrink:0;'>"
-                    f"<div style='font-size:80px; font-weight:800; "
+                    f"<div style='font-size:clamp(48px, 8vw, 80px); font-weight:800; "
                     f"line-height:0.95; letter-spacing:-0.05em; "
                     f"color:{info['warna']};'>{ispu_avg}</div>"
                     "<div style='font-size:15px; font-weight:600; "
@@ -2082,13 +2300,75 @@ def page_detail_wilayah(data):
         unsafe_allow_html=True,
     )
 
-    # Tabs wilayah
-    wilayah_list = data["wilayah"]["wilayah"].tolist()
-    tabs = st.tabs(wilayah_list)
+    # CSS: ubah tab Streamlit menjadi pill horizontal ber-ikon (gaya Figma)
+    st.markdown(
+        """
+        <style>
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            gap: 10px; border-bottom: none; flex-wrap: wrap;
+            background: transparent; padding: 2px 0 6px;
+            width: 100%; justify-content: space-between;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"] {
+            border: 1.5px solid #E2E8F0; border-radius: 999px;
+            padding: 9px 20px; background: #FFFFFF; color: #475569;
+            font-weight: 600; font-size: 15px; height: auto;
+            transition: all .15s ease;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"]:hover {
+            border-color: #BFDBFE; background: #F8FAFF; color: #2563EB;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+            background: #EFF6FF; border-color: #3B82F6; color: #2563EB;
+        }
+        /* sembunyikan garis bawah & highlight bawaan tab */
+        [data-testid="stTabs"] [data-baseweb="tab-highlight"],
+        [data-testid="stTabs"] [data-baseweb="tab-border"] { display: none !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Tabs wilayah — 5 wilayah berdata + "Kep. Seribu" (belum ada stasiun/data).
+    # wilayah_list disimpan bersih (untuk lookup data); label tab diberi ikon.
+    wilayah_list = data["wilayah"]["wilayah"].tolist() + ["Kep. Seribu"]
+    tab_labels = [f"🟢 {w}" for w in wilayah_list]
+    tabs = st.tabs(tab_labels)
 
     for tab, wilayah in zip(tabs, wilayah_list):
         with tab:
-            row = data["wilayah"][data["wilayah"]["wilayah"] == wilayah].iloc[0]
+            match = data["wilayah"][data["wilayah"]["wilayah"] == wilayah]
+
+            # ── Empty state: wilayah tanpa data ISPU (mis. Kep. Seribu) ──
+            if match.empty:
+                with st.container(border=True):
+                    st.markdown(
+                        f"<div class='card-title'>Kualitas Udara {wilayah}</div>",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        """
+                        <div style="display:flex; flex-direction:column; align-items:center;
+                                    justify-content:center; text-align:center; padding:64px 20px;">
+                            <svg width="58" height="58" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="9" stroke="#3B82F6" stroke-width="1.7"/>
+                                <path d="M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6"
+                                      stroke="#3B82F6" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                            <div style="font-size:18px; font-weight:700; color:#1E293B; margin-top:20px;">
+                                Data Kualitas Udara Belum Tersedia
+                            </div>
+                            <div style="font-size:14px; color:#94A3B8; margin-top:8px; max-width:440px;">
+                                Data ISPU untuk wilayahnya saat ini belum tersedia atau belum diperbarui.
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                continue
+
+            row = match.iloc[0]
             kat = row["kategori"]
             info = KATEGORI_INFO[kat]
 
@@ -2378,6 +2658,11 @@ def _polutan_slider_block(pol_key: str):
     info = INFO_POLUTAN[cfg["info_key"]]
     cur_val = float(st.session_state[cfg["slider_key"]])
 
+    # Label: PM2.5 ditandai "(Dominan)" sesuai desain (polutan kritis di Jakarta)
+    label_html = cfg["label"]
+    if pol_key == "pm25":
+        label_html += " <span style='font-weight:600; color:#475569;'>(Dominan)</span>"
+
     # Header mini-card: label + nilai + unit, dot warna polutan, deskripsi
     st.markdown(
         f"""
@@ -2385,10 +2670,10 @@ def _polutan_slider_block(pol_key: str):
             <div class='slider-card-head'>
                 <div class='slider-card-label'>
                     <span class='slider-card-dot' style='background:{info["warna"]};'></span>
-                    {cfg["label"]}
+                    {label_html}
                 </div>
                 <div class='slider-card-value'>
-                    {cur_val:.{cfg["decimals"]}f}<span class='slider-card-unit'>{cfg["unit"]}</span>
+                    {cur_val:g}<span class='slider-card-unit'>{cfg["unit"]}</span>
                 </div>
             </div>
             <div class='slider-card-desc'>{info["deskripsi_pendek"]}</div>
@@ -2397,13 +2682,18 @@ def _polutan_slider_block(pol_key: str):
         unsafe_allow_html=True,
     )
     # Slider widget — di luar mini-card karena Streamlit tidak bisa nest widget
-    # dalam HTML kustom. Tarik ke atas dengan margin negatif supaya visual menyatu
-    # dengan mini-card di atasnya.
+    # dalam HTML kustom.
     val = st.slider(
         cfg["label"], cfg["min"], cfg["max"],
         value=cur_val, step=cfg["step"],
         key=cfg["slider_key"],
         label_visibility="collapsed",
+    )
+    # Label min–max kustom (integer) — menggantikan tick "0.00 / 500.00" bawaan
+    st.markdown(
+        f"<div class='slider-minmax'><span>{int(cfg['min'])}</span>"
+        f"<span>{int(cfg['max'])}</span></div>",
+        unsafe_allow_html=True,
     )
     return val
 
@@ -2414,10 +2704,6 @@ def page_simulasi(data):
         "<div class='page-subtitle'>Simulasikan kualitas udara berdasarkan konsentrasi polutan.</div>",
         unsafe_allow_html=True,
     )
-
-    # PENANDA VERIFIKASI — boleh dihapus setelah konfirmasi.
-    # Jika baris hijau ini MUNCUL, berarti file terbaru (kartu sudah diperbaiki) sudah aktif.
-    st.success("✅ Layout kartu v2 aktif — kotak Komposisi Polutan & Hasil Prediksi membungkus seluruh konten.")
 
     # Banner panduan
     st.markdown(
@@ -2430,7 +2716,7 @@ def page_simulasi(data):
             </div>
             <div class='step-item'>
                 <div class='step-num'>2</div>
-                <div class='step-text'>Hasil ISPU dan kategori akan ter-update secara real-time di samping kanan.</div>
+                <div class='step-text'>Hasil ISPU dan kategori akan muncul otomatis di samping kanan.</div>
             </div>
             <div class='step-item'>
                 <div class='step-num'>3</div>
@@ -2460,34 +2746,42 @@ def page_simulasi(data):
     with col_left:
         with st.container(border=True):
 
-            # Header card: icon + title + desc
+            # ── Header card (gaya Figma): judul kiri + tombol penjelasan kanan ──
+            hcol1, hcol2 = st.columns([1, 0.62])
+            with hcol1:
+                st.markdown(
+                    "<div class='sim-card-title' style='padding-top:4px;'>Komposisi Polutan</div>",
+                    unsafe_allow_html=True,
+                )
+            with hcol2:
+                st.markdown('<div class="penjelasan-marker"></div>', unsafe_allow_html=True)
+                if st.button("ⓘ Lihat Penjelasan Polutan", key="btn_penjelasan_polutan",
+                             use_container_width=True):
+                    render_popup_polutan()
             st.markdown(
-                """
-                <div class='sim-card-header'>
-                    <div class='sim-card-icon'>⚗</div>
-                    <div style='flex:1;'>
-                        <div class='sim-card-title'>Komposisi Polutan</div>
-                        <div class='sim-card-desc'>
-                            Atur konsentrasi setiap polutan untuk mensimulasikan kualitas udara.
-                        </div>
-                    </div>
-                </div>
-                """,
+                "<div class='sim-card-desc' style='margin:2px 0 18px;'>"
+                "Sesuaikan slider di bawah untuk mensimulasikan kondisi polutan dan "
+                "memprediksi Indeks Standar Pencemar Udara (ISPU)."
+                "</div>",
                 unsafe_allow_html=True,
             )
 
-            # ── Preset Skenario ──
+            # Model dikunci ke XGBoost (tanpa UI — sesuai desain).
+            st.session_state["sim_model_choice"] = "xgboost"
+
+            # ── Preset Skenario Udara ──
             st.markdown(
-                "<div class='sim-section-label'>Preset Skenario</div>",
+                "<div class='sim-heading'>Preset Skenario Udara</div>",
                 unsafe_allow_html=True,
             )
 
+            # (key internal kategori, label tampil sesuai Figma, tooltip rentang ISPU)
             preset_labels = {
-                "Baik":               ("Baik",        "ISPU 0–50"),
-                "Sedang":             ("Sedang",      "ISPU 51–100"),
-                "Tidak Sehat":        ("Tidak Sehat", "ISPU 101–200"),
-                "Sangat Tidak Sehat": ("Sangat",      "ISPU 201–300"),
-                "Berbahaya":          ("Berbahaya",   "ISPU ≥ 301"),
+                "Baik":               ("Baik",             "ISPU 0–50"),
+                "Sedang":             ("Sedang",           "ISPU 51–100"),
+                "Tidak Sehat":        ("Tidak Baik",       "ISPU 101–200"),
+                "Sangat Tidak Sehat": ("Sangat Tidak Baik","ISPU 201–300"),
+                "Berbahaya":          ("Bahaya",           "ISPU ≥ 301"),
             }
             current_active = st.session_state.get("sim_active_preset")
             pc = st.columns(5, gap="small")
@@ -2502,36 +2796,12 @@ def page_simulasi(data):
                     )
                     st.button(
                         label, key=f"preset_{cat_suffix}",
-                        use_container_width=True, help=f"Kualitas udara {name} ({tip})",
+                        use_container_width=True, help=f"Skenario {label} ({tip})",
                         on_click=apply_preset, args=(name,),
                     )
 
-            # ── Model Klasifikasi ──
-            st.markdown(
-                "<div style='margin-top:18px;'></div>"
-                "<div class='sim-section-label'>Model Klasifikasi</div>",
-                unsafe_allow_html=True,
-            )
-            model_label = st.selectbox(
-                "Model Klasifikasi",
-                ["XGBoost (Rekomendasi)", "Random Forest", "SVM"],
-                label_visibility="collapsed",
-                help="XGBoost direkomendasikan karena akurasi tertinggi pada data uji.",
-                key="sim_model_label",
-            )
-            model_choice_map = {
-                "XGBoost (Rekomendasi)": "xgboost",
-                "Random Forest": "random_forest",
-                "SVM": "svm",
-            }
-            st.session_state["sim_model_choice"] = model_choice_map[model_label]
-
-            # ── Sliders 6 polutan dalam 2 kolom ──
-            st.markdown(
-                "<div style='margin-top:19px;'></div>"
-                "<div class='sim-section-label'>Konsentrasi Polutan</div>",
-                unsafe_allow_html=True,
-            )
+            # ── Kartu 6 polutan dalam 2 kolom (tanpa label section, sesuai Figma) ──
+            st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
             sc1, sc2 = st.columns(2, gap="medium")
             vals = {}
             with sc1:
@@ -2548,28 +2818,25 @@ def page_simulasi(data):
             if detected != st.session_state.get("sim_active_preset"):
                 st.session_state["sim_active_preset"] = detected
 
-            # ── Tombol Info & Reset di footer card ──
+            # ── Tombol Reset di footer card (kanan bawah, sesuai Figma) ──
             st.markdown(
                 "<div style='border-top:1px solid #F1F5F9; margin-top:19px; padding-top:16px;'></div>",
                 unsafe_allow_html=True,
             )
-            bc1, bc2, _bc3 = st.columns([1.4, 1.2, 2])
-            with bc1:
+            _bc_sp, bc_reset = st.columns([2.4, 1])
+            with bc_reset:
                 st.markdown('<div class="reset-marker"></div>', unsafe_allow_html=True)
                 st.button(
-                    "↺ Reset Semua", key="btn_reset",
+                    "Reset", key="btn_reset",
                     type="secondary", use_container_width=True,
                     on_click=reset_simulation,
-                    help="Kembalikan semua slider ke 0 & hapus preset aktif.",
+                    help="Kembalikan semua slider ke 0.",
                 )
-            with bc2:
-                if st.button("ⓘ Info Polutan", key="btn_info_simulasi", use_container_width=True):
-                    render_popup_polutan()
 
 
     # ─────────── KANAN: Card "Hasil Prediksi ISPU" ───────────
     with col_right:
-        # Hitung ISPU realtime tiap rerun
+        # Hasil dihitung REAL-TIME dari nilai slider saat ini (tanpa tombol submit).
         nilai_ispu, kategori, polutan_dominan, subindeks = calculate_ispu_category(
             pm10=vals["pm10"], pm25=vals["pm25"], so2=vals["so2"],
             co=vals["co"],   o3=vals["o3"],     no2=vals["no2"],
@@ -2579,7 +2846,7 @@ def page_simulasi(data):
             ml = prediksi_ispu_xgboost(
                 pm10=vals["pm10"], pm25=vals["pm25"], so2=vals["so2"],
                 co=vals["co"],   o3=vals["o3"],     no2=vals["no2"],
-                model_choice=st.session_state.get("sim_model_choice", "xgboost"),
+                model_choice="xgboost",
             )
             ml_kategori   = ml.get("kategori")
             ml_model_used = ml.get("model_used", "XGBoost")
@@ -2622,12 +2889,16 @@ def page_simulasi(data):
                 unsafe_allow_html=True,
             )
 
-            # Badge preset aktif
+            # Badge preset aktif (pakai label tampilan sesuai Figma)
             active_name = st.session_state.get("sim_active_preset")
             if active_name:
+                preset_display = {
+                    "Baik": "Baik", "Sedang": "Sedang", "Tidak Sehat": "Tidak Baik",
+                    "Sangat Tidak Sehat": "Sangat Tidak Baik", "Berbahaya": "Bahaya",
+                }
                 st.markdown(
                     f"<div class='active-preset-badge'><span class='dot'></span>"
-                    f"Preset aktif: <strong>{active_name}</strong></div>",
+                    f"Preset aktif: <strong>{preset_display.get(active_name, active_name)}</strong></div>",
                     unsafe_allow_html=True,
                 )
 
@@ -2933,12 +3204,23 @@ def page_edukasi(data):
 def main():
     inject_css()
     data = load_data()
-    page = render_sidebar()
+
+    # Init halaman aktif (sumber kebenaran tunggal)
+    if "nav_page" not in st.session_state:
+        st.session_state["nav_page"] = NAV_OPTIONS[0]
+
+    # Sidebar (desktop) — menulis nav_page lewat callback
+    render_sidebar()
 
     # Handle redirect dari tombol "Lihat Selengkapnya" di dashboard
     if st.session_state.get("jump_to_detail"):
         st.session_state["jump_to_detail"] = False
-        page = "Detail Wilayah"
+        st.session_state["nav_page"] = "Detail Wilayah"
+
+    # Top-nav (mobile) — di atas konten, tampil hanya di layar kecil
+    render_top_nav()
+
+    page = st.session_state.get("nav_page", NAV_OPTIONS[0])
 
     if page == "Dashboard":
         page_dashboard(data)
