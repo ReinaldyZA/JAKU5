@@ -2492,41 +2492,39 @@ def _detect_active_preset(current_vals: dict):
 
 def _polutan_slider_block(pol_key: str):
     """
-    Render satu slider polutan dalam mini-card style.
-    Mini-card terdiri dari: header (label + nilai realtime), deskripsi singkat,
-    slider Streamlit (lebar penuh), lalu spacer. Mengembalikan nilai terbaru.
+    Render satu slider polutan dalam kartu ber-border (mengikuti mockup Figma):
+    dot warna polutan + nama (PM2.5 diberi label "(Dominan)"), deskripsi singkat,
+    lalu slider lebar penuh dengan label min/max bawaan Streamlit (0 … max).
+    Mengembalikan nilai terbaru.
     """
     cfg = SIM_SLIDER_CONFIG[pol_key]
     info = INFO_POLUTAN[cfg["info_key"]]
     cur_val = float(st.session_state[cfg["slider_key"]])
 
-    # Header mini-card: label + nilai + unit, dot warna polutan, deskripsi
-    st.markdown(
-        f"""
-        <div class='slider-card'>
-            <div class='slider-card-head'>
-                <div class='slider-card-label'>
-                    <span class='slider-card-dot' style='background:{info["warna"]};'></span>
-                    {cfg["label"]}
-                </div>
-                <div class='slider-card-value'>
-                    {cur_val:.{cfg["decimals"]}f}<span class='slider-card-unit'>{cfg["unit"]}</span>
-                </div>
+    nama = cfg["label"] + (" (Dominan)" if pol_key == "pm25" else "")
+
+    # Tiap polutan = satu kartu ber-border. Header (dot + nama) + deskripsi,
+    # lalu slider Streamlit (label 0 … max muncul otomatis di bawah track).
+    with st.container(border=True):
+        st.markdown(
+            f"""
+            <div style="display:flex; align-items:center; gap:9px; margin-bottom:6px;">
+                <span style="width:14px; height:14px; border-radius:50%;
+                             background:{info["warna"]}; display:inline-block; flex-shrink:0;"></span>
+                <span style="font-size:16px; font-weight:700; color:#0F172A;">{nama}</span>
             </div>
-            <div class='slider-card-desc'>{info["deskripsi_pendek"]}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    # Slider widget — di luar mini-card karena Streamlit tidak bisa nest widget
-    # dalam HTML kustom. Tarik ke atas dengan margin negatif supaya visual menyatu
-    # dengan mini-card di atasnya.
-    val = st.slider(
-        cfg["label"], cfg["min"], cfg["max"],
-        value=cur_val, step=cfg["step"],
-        key=cfg["slider_key"],
-        label_visibility="collapsed",
-    )
+            <div style="font-size:13.5px; color:#64748B; line-height:1.45; margin-bottom:4px;">
+                {info["deskripsi_pendek"]}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        val = st.slider(
+            cfg["label"], cfg["min"], cfg["max"],
+            value=cur_val, step=cfg["step"],
+            key=cfg["slider_key"],
+            label_visibility="collapsed",
+        )
     return val
 
 
@@ -2536,7 +2534,7 @@ def page_simulasi(data):
         "<div class='page-subtitle'>Simulasikan kualitas udara berdasarkan konsentrasi polutan.</div>",
         unsafe_allow_html=True,
     )
-    
+
     # Banner panduan
     st.markdown(
         """
@@ -2578,73 +2576,59 @@ def page_simulasi(data):
     with col_left:
         with st.container(border=True):
 
-            # Header card: icon + title + desc
+            # ── Header: judul (kiri) + tombol "Lihat Penjelasan Polutan" (kanan) ──
+            head_l, head_r = st.columns([1, 1], gap="small")
+            with head_l:
+                st.markdown(
+                    "<div class='sim-card-title' style='padding-top:8px;'>Komposisi Polutan</div>",
+                    unsafe_allow_html=True,
+                )
+            with head_r:
+                if st.button(
+                    "ⓘ Lihat Penjelasan Polutan",
+                    key="btn_info_simulasi", use_container_width=True,
+                ):
+                    render_popup_polutan()
+
+            # Deskripsi card
             st.markdown(
-                """
-                <div class='sim-card-header'>
-                    <div class='sim-card-icon'>⚗</div>
-                    <div style='flex:1;'>
-                        <div class='sim-card-title'>Komposisi Polutan</div>
-                        <div class='sim-card-desc'>
-                            Atur konsentrasi setiap polutan untuk mensimulasikan kualitas udara.
-                        </div>
-                    </div>
-                </div>
-                """,
+                "<div class='sim-card-desc' style='margin-top:6px; margin-bottom:4px;'>"
+                "Sesuaikan slider di bawah untuk mensimulasikan kondisi polutan dan "
+                "memprediksi Indeks Standar Pencemar Udara (ISPU)."
+                "</div>",
                 unsafe_allow_html=True,
             )
 
-            # ── Preset Skenario ──
+            # ── Preset Skenario Udara ──
             st.markdown(
-                "<div class='sim-section-label'>Preset Skenario</div>",
+                "<div class='sim-section-label' style='margin-top:14px;'>Preset Skenario Udara</div>",
                 unsafe_allow_html=True,
             )
 
+            # Label tombol mengikuti mockup Figma. Kunci internal preset (key dict)
+            # tetap memakai kategori ISPU resmi agar apply_preset & kalkulasi konsisten.
             preset_labels = {
-                "Baik":               ("Baik",        "ISPU 0–50"),
-                "Sedang":             ("Sedang",      "ISPU 51–100"),
-                "Tidak Sehat":        ("Tidak Sehat", "ISPU 101–200"),
-                "Sangat Tidak Sehat": ("Sangat",      "ISPU 201–300"),
-                "Berbahaya":          ("Berbahaya",   "ISPU ≥ 301"),
+                "Baik":               "Baik",
+                "Sedang":             "Sedang",
+                "Tidak Sehat":        "Tidak Baik",
+                "Sangat Tidak Sehat": "Sangat Tidak Baik",
+                "Berbahaya":          "Bahaya",
             }
-            current_active = st.session_state.get("sim_active_preset")
             pc = st.columns(5, gap="small")
-            for col, (name, (label, tip)) in zip(pc, preset_labels.items()):
+            for col, (name, label) in zip(pc, preset_labels.items()):
                 with col:
-                    # Marker class: warna kategori + state active/idle
-                    cat_suffix = preset_css_suffix[name]
-                    active_mod = " active" if current_active == name else ""
-                    st.markdown(
-                        f'<div class="pmkr pmkr-{cat_suffix}{active_mod}"></div>',
-                        unsafe_allow_html=True,
-                    )
                     st.button(
-                        label, key=f"preset_{cat_suffix}",
-                        use_container_width=True, help=f"Kualitas udara {name} ({tip})",
+                        label, key=f"preset_{preset_css_suffix[name]}",
+                        use_container_width=True,
+                        help=f"Terapkan skenario kualitas udara {name}.",
                         on_click=apply_preset, args=(name,),
                     )
 
-            # ── Model Klasifikasi ──
-            st.markdown(
-                "<div style='margin-top:18px;'></div>"
-                "<div class='sim-section-label'>Model Klasifikasi</div>",
-                unsafe_allow_html=True,
-            )
-            model_label = st.selectbox(
-                "Model Klasifikasi",
-                ["XGBoost (Rekomendasi)"],
-                label_visibility="collapsed",
-                help="Dashboard ini menggunakan model XGBoost.",
-                key="sim_model_label",
-            )
+            # Model klasifikasi tetap XGBoost (disembunyikan dari UI sesuai desain).
             st.session_state["sim_model_choice"] = "xgboost"
-            
-            # ── Sliders 6 polutan dalam 2 kolom ──
-            st.markdown(
-                "<div style='margin-top:19px;'></div>"
-                "<div class='sim-section-label'>Konsentrasi Polutan</div>",
-                unsafe_allow_html=True,
-            )
+
+            # ── Sliders 6 polutan dalam 2 kolom × 3 baris (tiap polutan = kartu) ──
+            st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
             sc1, sc2 = st.columns(2, gap="medium")
             vals = {}
             with sc1:
@@ -2661,23 +2645,16 @@ def page_simulasi(data):
             if detected != st.session_state.get("sim_active_preset"):
                 st.session_state["sim_active_preset"] = detected
 
-            # ── Tombol Info & Reset di footer card ──
-            st.markdown(
-                "<div style='border-top:1px solid #F1F5F9; margin-top:19px; padding-top:16px;'></div>",
-                unsafe_allow_html=True,
-            )
-            bc1, bc2, _bc3 = st.columns([1.4, 1.2, 2])
-            with bc1:
-                st.markdown('<div class="reset-marker"></div>', unsafe_allow_html=True)
+            # ── Footer: tombol Reset di kanan ──
+            st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
+            _ft_spacer, ft_reset = st.columns([3, 1])
+            with ft_reset:
                 st.button(
-                    "↺ Reset Semua", key="btn_reset",
+                    "Reset", key="btn_reset",
                     type="secondary", use_container_width=True,
                     on_click=reset_simulation,
                     help="Kembalikan semua slider ke 0 & hapus preset aktif.",
                 )
-            with bc2:
-                if st.button("ⓘ Info Polutan", key="btn_info_simulasi", use_container_width=True):
-                    render_popup_polutan()
 
 
     # ─────────── KANAN: Card "Hasil Prediksi ISPU" ───────────
