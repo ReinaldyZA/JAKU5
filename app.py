@@ -194,7 +194,7 @@ def inject_css():
         min-width: 300px;
     }
     [data-testid="stSidebar"] > div:first-child {
-        padding-top: 16px;
+        padding-top: 0px;
     }
 
     .sidebar-logo {
