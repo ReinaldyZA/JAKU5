@@ -153,15 +153,15 @@ def inject_css():
     #MainMenu, footer {visibility: hidden;}
 
     /* FIX TAMBAHAN — hilangkan SEMUA chrome Streamlit yang masih muncul
-       (toolbar Share/star/edit/GitHub di kanan atas + "Manage app" di kanan bawah) */
+       (toolbar Share/star/edit/GitHub di kanan atas + "Manage app" di kanan bawah)
+       CATATAN: JANGAN sembunyikan button[kind="header"/"headerNoPadding"] —
+       itu tombol buka/tutup sidebar (hamburger), dibutuhkan di mobile. */
     [data-testid="stToolbar"],
     [data-testid="stActionButton"],
     [data-testid="stStatusWidget"],
     [data-testid="stDecoration"],
     .stDeployButton,
     .stAppDeployButton,
-    button[kind="header"],
-    button[kind="headerNoPadding"],
     div[class*="viewerBadge"],
     iframe[title="streamlit_app"] {
         display: none !important;
@@ -169,6 +169,30 @@ def inject_css():
     }
     /* Toolbar wrapper kosong tetap memakan tinggi → set 0 */
     .stApp > header { height: 0 !important; }
+
+    /* PENTING — tombol hamburger pembuka sidebar HARUS selalu tampil,
+       terutama di mobile saat sidebar tertutup otomatis. Tanpa ini,
+       menu navigasi tidak bisa diakses sama sekali. */
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="collapsedControl"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: fixed !important;
+        top: 10px !important; left: 10px !important;
+        z-index: 1000000 !important;
+    }
+    [data-testid="stSidebarCollapsedControl"] button,
+    [data-testid="collapsedControl"] button {
+        display: inline-flex !important;
+        visibility: visible !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 10px !important;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12) !important;
+        color: #2563EB !important;
+        padding: 6px !important;
+    }
 
     /* ============ SIDEBAR ============ */
     [data-testid="stSidebar"] {
@@ -1133,6 +1157,7 @@ def inject_css():
     @media (max-width: 768px) {
         .block-container {
             padding-left: 14px !important; padding-right: 14px !important;
+            padding-top: 52px !important;   /* ruang untuk tombol hamburger */
         }
         /* Kolom Streamlit menumpuk vertikal & memenuhi lebar di mobile */
         [data-testid="stHorizontalBlock"] { flex-direction: column; gap: 12px; }
