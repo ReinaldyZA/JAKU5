@@ -170,14 +170,24 @@ def inject_css():
     /* Toolbar wrapper kosong tetap memakan tinggi → set 0 */
     .stApp > header { height: 0 !important; }
 
-    /* ============ SIDEBAR ============ */
+    /* ============ SIDEBAR (spesifikasi Figma: width 240px, border-right 1px) ============ */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
-        padding-top: 16px;
+        width: 240px !important;
+        min-width: 240px !important;
+        max-width: 240px !important;
     }
-    [data-testid="stSidebar"] > div:first-child {
-        padding-top: 16px;
+    /* Hilangkan ruang kosong atas bawaan Streamlit agar logo "mentok" ke atas */
+    [data-testid="stSidebar"] > div:first-child { padding-top: 0 !important; }
+    [data-testid="stSidebarUserContent"],
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"]:first-child {
+        padding-top: 0 !important;
+        gap: 10px;                       /* Gap antar elemen = 10px (Figma) */
+    }
+    [data-testid="stSidebarHeader"],
+    [data-testid="stSidebarCollapseButton"] {
+        padding-top: 0 !important; min-height: 0 !important;
     }
 
     .sidebar-logo {
@@ -1661,7 +1671,7 @@ def render_sidebar():
                 raw_svg, count=1,
             )
             st.markdown(
-                f'<div style="padding:10px 12px 20px;">{raw_svg}</div>',
+                f'<div style="padding:20px 20px 10px 20px;">{raw_svg}</div>',
                 unsafe_allow_html=True,
             )
         else:
