@@ -190,11 +190,31 @@ def inject_css():
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
-        padding-top: 16px;
+        padding-top: 0 !important;
         min-width: 300px;
     }
     [data-testid="stSidebar"] > div:first-child {
-        padding-top: 16px;
+        padding-top: 0 !important;
+    }
+    /* Override semua padding/gap bawaan Streamlit di sidebar */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+    }
+    section[data-testid="stSidebar"] > div {
+        padding-top: 0 !important;
+    }
+    /* Hilangkan margin atas elemen markdown pertama di sidebar */
+    [data-testid="stSidebar"] .stMarkdown:first-child {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    /* Kompensasi padding internal Streamlit di sidebar wrapper */
+    [data-testid="stSidebar"] > div > div {
+        padding-top: 0 !important;
+    }
+    /* Hilangkan gap antar elemen di sidebar */
+    [data-testid="stSidebar"] .element-container {
+        margin-bottom: 0 !important;
     }
 
     .sidebar-logo {
@@ -1722,7 +1742,7 @@ def render_sidebar():
                 raw_svg, count=1,
             )
             st.markdown(
-                f'<div style="padding:10px 12px 20px;">{raw_svg}</div>',
+                f'<div style="padding:24px 16px 8px 16px;">{raw_svg}</div>',
                 unsafe_allow_html=True,
             )
         else:
@@ -1755,8 +1775,9 @@ def render_sidebar():
             default_index=0,
             styles={
                 "container": {
-                    "padding": "4px 8px",
+                    "padding": "0px 8px",
                     "background-color": "#FFFFFF",
+                    "margin-top": "4px",
                 },
                 "icon": {"font-size": "17px"},
                 "nav-link": {
@@ -1764,7 +1785,7 @@ def render_sidebar():
                     "font-weight": "500",
                     "color": "#475569",
                     "padding": "11px 16px",
-                    "margin": "3px 0",
+                    "margin": "2px 0",
                     "border-radius": "10px",
                     "--hover-color": "#F1F5F9",
                 },
@@ -1777,7 +1798,7 @@ def render_sidebar():
         )
 
         # Spacer untuk dorong footer ke bawah
-        st.markdown("<div style='flex:1; min-height:96px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='flex:1; min-height:24px;'></div>", unsafe_allow_html=True)
 
         # Footer sidebar
         st.markdown(
