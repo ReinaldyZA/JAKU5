@@ -34,7 +34,7 @@ st.set_page_config(
     page_title="JakU - Dashboard Kualitas Udara",
     page_icon="🌤️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 # ================================================================
@@ -170,13 +170,20 @@ def inject_css():
     /* Toolbar wrapper kosong tetap memakan tinggi → set 0 */
     .stApp > header { height: 0 !important; }
 
-    /* ============ SIDEBAR (spesifikasi Figma: width 240px, border-right 1px) ============ */
+    /* ============ SIDEBAR ============ */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
-        width: 240px !important;
-        min-width: 240px !important;
-        max-width: 240px !important;
+    }
+    /* Lebar tetap 240px HANYA di desktop (spesifikasi Figma). Di mobile,
+       biarkan Streamlit menanganinya sebagai laci overlay agar TIDAK
+       menindih konten. */
+    @media (min-width: 769px) {
+        [data-testid="stSidebar"] {
+            width: 240px !important;
+            min-width: 240px !important;
+            max-width: 240px !important;
+        }
     }
     /* Hilangkan ruang kosong atas bawaan Streamlit agar logo "mentok" ke atas */
     [data-testid="stSidebar"] > div:first-child { padding-top: 0 !important; }
