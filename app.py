@@ -1152,6 +1152,11 @@ def inject_css():
         .pollutant-grid { grid-template-columns: repeat(3, 1fr); }
     }
 
+    /* Top-nav (menu mobile) disembunyikan di desktop — sidebar yang dipakai */
+    [data-testid="stElementContainer"]:has(.topnav-marker) + [data-testid="stElementContainer"] {
+        display: none;
+    }
+
     /* ===== MOBILE (<= 768px) ===== */
     @media (max-width: 768px) {
         .block-container {
@@ -1175,6 +1180,18 @@ def inject_css():
         [data-testid="stTabs"] [data-baseweb="tab-list"] { flex-wrap: wrap; }
         /* Sidebar (overlay di mobile) tidak melebihi viewport */
         [data-testid="stSidebar"] { max-width: 85vw !important; }
+        /* ── NAVIGASI MOBILE ──
+           Tampilkan top-nav horizontal, sembunyikan sidebar + tombolnya.
+           Navigasi jadi selalu terlihat tanpa perlu tombol hamburger. */
+        [data-testid="stElementContainer"]:has(.topnav-marker) + [data-testid="stElementContainer"] {
+            display: block !important;
+        }
+        [data-testid="stSidebar"],
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="collapsedControl"],
+        [data-testid="stExpandSidebarButton"] {
+            display: none !important;
+        }
         /* Kartu tanggal "Data terakhir diperbarui" jadi full-width di mobile */
         .updated-card { display: block !important; width: 100% !important; }
         /* Padding kartu lebih ringkas + jarak antar kartu konsisten */
@@ -1737,6 +1754,63 @@ def render_popup_polutan():
 
 
 # ================================================================
+# NAVIGASI (sidebar untuk desktop + top-nav untuk mobile)
+# ================================================================
+# Satu sumber kebenaran halaman aktif: st.session_state["nav_page"].
+# Di desktop dipakai sidebar; di mobile sidebar disembunyikan dan
+# navigasi memakai menu horizontal di atas konten (selalu terlihat,
+# tidak bergantung pada tombol hamburger Streamlit).
+NAV_OPTIONS = ["Dashboard", "Detail Wilayah", "Simulasi Prediksi ISPU", "Edukasi & Insight"]
+NAV_ICONS = ["grid", "geo-alt", "bar-chart", "book"]
+
+
+def _nav_current_index():
+    page = st.session_state.get("nav_page", NAV_OPTIONS[0])
+    return NAV_OPTIONS.index(page) if page in NAV_OPTIONS else 0
+
+
+def _sync_nav_from_side(*_):
+    """Callback option_menu sidebar → set halaman aktif."""
+    st.session_state["nav_page"] = st.session_state.get("nav_side", NAV_OPTIONS[0])
+
+
+def _sync_nav_from_top(*_):
+    """Callback option_menu top-nav (mobile) → set halaman aktif."""
+    st.session_state["nav_page"] = st.session_state.get("nav_top", NAV_OPTIONS[0])
+
+
+def render_top_nav():
+    """
+    Menu navigasi horizontal di atas konten — TAMPIL HANYA DI MOBILE
+    (disembunyikan di desktop via CSS). Memberi akses navigasi yang pasti
+    terlihat di HP tanpa bergantung pada tombol buka-sidebar.
+    """
+    # Marker untuk hook CSS show/hide (pola sama seperti tombol preset).
+    st.markdown('<div class="topnav-marker"></div>', unsafe_allow_html=True)
+    option_menu(
+        menu_title=None,
+        options=NAV_OPTIONS,
+        icons=NAV_ICONS,
+        default_index=_nav_current_index(),
+        orientation="horizontal",
+        key="nav_top",
+        on_change=_sync_nav_from_top,
+        styles={
+            "container": {"padding": "4px", "background-color": "#FFFFFF",
+                          "border": "1px solid #E2E8F0", "border-radius": "14px",
+                          "margin-bottom": "12px"},
+            "icon": {"font-size": "15px"},
+            "nav-link": {"font-size": "13px", "font-weight": "600",
+                         "color": "#475569", "padding": "9px 10px",
+                         "margin": "2px", "border-radius": "10px",
+                         "--hover-color": "#F1F5F9"},
+            "nav-link-selected": {"background-color": "#DBEAFE",
+                                  "color": "#2563EB", "font-weight": "700"},
+        },
+    )
+
+
+# ================================================================
 # SIDEBAR
 # ================================================================
 def render_sidebar():
@@ -1782,17 +1856,14 @@ def render_sidebar():
                 unsafe_allow_html=True,
             )
 
-        # Menu utama
+        # Menu utama (desktop) — sinkron ke nav_page lewat callback
         selected = option_menu(
             menu_title=None,
-            options=[
-                "Dashboard",
-                "Detail Wilayah",
-                "Simulasi Prediksi ISPU",
-                "Edukasi & Insight",
-            ],
-            icons=["grid", "geo-alt", "bar-chart", "book"],
-            default_index=0,
+            options=NAV_OPTIONS,
+            icons=NAV_ICONS,
+            default_index=_nav_current_index(),
+            key="nav_side",
+            on_change=_sync_nav_from_side,
             styles={
                 "container": {
                     "padding": "4px 8px",
@@ -3132,12 +3203,23 @@ def page_edukasi(data):
 def main():
     inject_css()
     data = load_data()
-    page = render_sidebar()
+
+    # Init halaman aktif (sumber kebenaran tunggal)
+    if "nav_page" not in st.session_state:
+        st.session_state["nav_page"] = NAV_OPTIONS[0]
+
+    # Sidebar (desktop) — menulis nav_page lewat callback
+    render_sidebar()
 
     # Handle redirect dari tombol "Lihat Selengkapnya" di dashboard
     if st.session_state.get("jump_to_detail"):
         st.session_state["jump_to_detail"] = False
-        page = "Detail Wilayah"
+        st.session_state["nav_page"] = "Detail Wilayah"
+
+    # Top-nav (mobile) — di atas konten, tampil hanya di layar kecil
+    render_top_nav()
+
+    page = st.session_state.get("nav_page", NAV_OPTIONS[0])
 
     if page == "Dashboard":
         page_dashboard(data)
