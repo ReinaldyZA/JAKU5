@@ -34,7 +34,7 @@ st.set_page_config(
     page_title="JakU - Dashboard Kualitas Udara",
     page_icon="🌤️",
     layout="wide",
-    initial_sidebar_state="auto",
+    initial_sidebar_state="expanded",
 )
 
 # ================================================================
@@ -145,15 +145,15 @@ def inject_css():
         max-width: 100% !important;
     }
 
-    /* Header Streamlit transparan. JANGAN di-height:0 secara global —
-       di mobile, tombol buka-sidebar (hamburger) ada di header ini. */
+    /* Header Streamlit transparan dan rata */
     header[data-testid="stHeader"] {
         background: transparent;
+        height: 0 !important;
     }
+    .stApp > header { height: 0 !important; }
     #MainMenu, footer {visibility: hidden;}
 
-    /* Sembunyikan HANYA chrome-nya (Deploy/toolbar/status), BUKAN seluruh
-       header — supaya tombol hamburger sidebar tetap ada di mobile. */
+    /* Sembunyikan semua chrome Streamlit */
     [data-testid="stToolbar"],
     [data-testid="stActionButton"],
     [data-testid="stStatusWidget"],
@@ -166,55 +166,32 @@ def inject_css():
         visibility: hidden !important;
     }
 
-    /* Di DESKTOP sidebar selalu terbuka → header boleh dirapatkan agar tak
-       ada celah kosong di atas. Di mobile header dibiarkan agar hamburger tampil. */
-    @media (min-width: 769px) {
-        header[data-testid="stHeader"] { height: 0 !important; }
-        .stApp > header { height: 0 !important; }
-    }
-
-    /* Pastikan tombol hamburger pembuka sidebar tidak ikut tersembunyi
-       (tanpa memaksa posisi — biarkan Streamlit menempatkannya). */
+    /* Sembunyikan semua tombol hamburger / collapse / expand sidebar */
     [data-testid="stSidebarCollapsedControl"],
     [data-testid="collapsedControl"],
-    [data-testid="stExpandSidebarButton"] {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        z-index: 1000000 !important;
-    }
-    [data-testid="stSidebarCollapsedControl"] button,
-    [data-testid="collapsedControl"] button,
-    [data-testid="stExpandSidebarButton"] {
-        background: #FFFFFF !important;
-        border: 1px solid #E2E8F0 !important;
-        border-radius: 10px !important;
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12) !important;
-        color: #2563EB !important;
+    [data-testid="stExpandSidebarButton"],
+    [data-testid="stSidebarCollapseButton"] {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
     }
 
-    /* ============ SIDEBAR ============ */
+    /* ============ SIDEBAR — fixed, selalu tampil, tidak bisa disembunyikan ============ */
     [data-testid="stSidebar"] {
-    background-color: #FFFFFF;
-    border-right: 1px solid #E2E8F0;
-    width: 240px !important;
-    min-width: 240px !important;
-    max-width: 240px !important;
-}
-
-/* Hilangkan tombol collapse */
-[data-testid="stSidebarCollapseButton"] {
-    display: none !important;
-}
-    /* Lebar tetap 240px HANYA di desktop (spesifikasi Figma). Di mobile,
-       biarkan Streamlit menanganinya sebagai laci overlay agar TIDAK
-       menindih konten. */
-    @media (min-width: 769px) {
-        [data-testid="stSidebar"] {
-            width: 240px !important;
-            min-width: 240px !important;
-            max-width: 240px !important;
-        }
+        background-color: #FFFFFF;
+        border-right: 1px solid #E2E8F0;
+        width: 240px !important;
+        min-width: 240px !important;
+        max-width: 240px !important;
+        transform: none !important;
+        transition: none !important;
+        visibility: visible !important;
+        display: block !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        height: 100vh !important;
+        z-index: 999 !important;
     }
     /* Hilangkan ruang kosong atas bawaan Streamlit agar logo "mentok" ke atas */
     [data-testid="stSidebar"] > div:first-child { padding-top: 0 !important; }
@@ -1007,12 +984,7 @@ def inject_css():
     }
     .sim-fade { animation: sim-fade-in 0.25s ease-out; }
 
-    /* Responsive — mobile: stack sliders, kurangi padding */
-    @media (max-width: 768px) {
-        .sim-card { padding: 18px; border-radius: 16px; }
-        .hero-result-num { font-size: 51px; }
-        .slider-card { padding: 11px 14px; }
-    }
+    /* Sim card — ukuran tetap desktop */
 
     /* ============ TABS WILAYAH ============ */
     .stTabs [data-baseweb="tab-list"] {
@@ -1136,89 +1108,24 @@ def inject_css():
     }
 
     /* ============================================================
-       RESPONSIVE — desktop, tablet, mobile, & zoom-out (50%–100%)
+       LAYOUT DESKTOP — fixed width, tidak responsif ke HP
        ============================================================ */
     /* Box-sizing global + cegah horizontal-scroll tak perlu */
     *, *::before, *::after { box-sizing: border-box; }
     .stApp { overflow-x: hidden; }
-    /* Media & komponen mengikuti lebar container (tidak meluber) */
+    /* Media & komponen mengikuti lebar container */
     img, svg, iframe, canvas, video { max-width: 100%; }
     [data-testid="stPlotlyChart"], .js-plotly-plot, .plot-container { width: 100% !important; }
     iframe[title="streamlit_folium.st_folium"] { width: 100% !important; }
 
-    /* Font angka/judul besar dibuat fluid via clamp() agar proporsional
-       di semua ukuran layar & tingkat zoom (50%-100%) */
-    .ispu-number     { font-size: clamp(44px, 7vw, 72px); }
-    .hero-result-num { font-size: clamp(42px, 6.2vw, 67px); }
-    .hasil-num       { font-size: clamp(40px, 6vw, 64px); }
-    .ispu-status     { font-size: clamp(18px, 2.4vw, 24px); }
-    .ispu-emoji      { font-size: clamp(36px, 5vw, 48px); }
-    .pollutant-value { font-size: clamp(18px, 2.4vw, 26px); }
+    /* Top-nav mobile selalu disembunyikan */
+    [data-testid="stElementContainer"]:has(.topnav-marker) + [data-testid="stElementContainer"] {
+        display: none !important;
+    }
 
-    /* ===== TABLET (<= 992px) ===== */
+    /* Responsive untuk sim-card di zoom kecil saja, bukan mobile */
     @media (max-width: 992px) {
         .pollutant-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-
-    /* Top-nav (menu mobile) disembunyikan di desktop — sidebar yang dipakai */
-    [data-testid="stElementContainer"]:has(.topnav-marker) + [data-testid="stElementContainer"] {
-        display: none;
-    }
-
-    /* ===== MOBILE (<= 768px) ===== */
-    @media (max-width: 768px) {
-        .block-container {
-            padding-left: 14px !important; padding-right: 14px !important;
-            padding-top: 8px !important;
-        }
-        /* Kolom Streamlit menumpuk vertikal & memenuhi lebar di mobile */
-        [data-testid="stHorizontalBlock"] { flex-direction: column; gap: 12px; }
-        [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
-        [data-testid="stHorizontalBlock"] > [data-testid="column"] {
-            width: 100% !important; flex: 1 1 100% !important; min-width: 0 !important;
-        }
-        .pollutant-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .ispu-hero { flex-direction: column; align-items: flex-start; gap: 12px; }
-        .ispu-number { font-size: clamp(40px, 13vw, 56px); }
-        .step-bar { grid-template-columns: 1fr; }
-        .sim-card, .slider-card { padding: 14px; }
-        /* Tombol full-width di mobile */
-        .stButton > button { width: 100% !important; }
-        /* Tab wilayah boleh menggulung ke baris berikutnya */
-        [data-testid="stTabs"] [data-baseweb="tab-list"] { flex-wrap: wrap; }
-        /* Sidebar (overlay di mobile) tidak melebihi viewport */
-        [data-testid="stSidebar"] { max-width: 85vw !important; }
-        /* ── NAVIGASI MOBILE ──
-           Tampilkan top-nav horizontal, sembunyikan sidebar + tombolnya.
-           Navigasi jadi selalu terlihat tanpa perlu tombol hamburger. */
-        [data-testid="stElementContainer"]:has(.topnav-marker) + [data-testid="stElementContainer"] {
-            display: block !important;
-        }
-        [data-testid="stSidebar"],
-        [data-testid="stSidebarCollapsedControl"],
-        [data-testid="collapsedControl"],
-        [data-testid="stExpandSidebarButton"] {
-            display: none !important;
-        }
-        /* Kartu tanggal "Data terakhir diperbarui" jadi full-width di mobile */
-        .updated-card { display: block !important; width: 100% !important; }
-        /* Padding kartu lebih ringkas + jarak antar kartu konsisten */
-        [data-testid="stVerticalBlockBorderWrapper"] {
-            padding: 16px !important; margin-bottom: 4px;
-        }
-        .page-title { font-size: clamp(22px, 6.5vw, 28px); }
-        .page-subtitle { font-size: 14px; }
-    }
-
-    /* ===== SMALL MOBILE (<= 480px) ===== */
-    @media (max-width: 480px) {
-        .block-container {
-            padding-left: 10px !important; padding-right: 10px !important;
-        }
-        .pollutant-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .ispu-number { font-size: clamp(36px, 14vw, 48px); }
-        .pollutant-value { font-size: 18px; }
-        .page-title { font-size: clamp(20px, 6vw, 26px); }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -3224,9 +3131,6 @@ def main():
     if st.session_state.get("jump_to_detail"):
         st.session_state["jump_to_detail"] = False
         st.session_state["nav_page"] = "Detail Wilayah"
-
-    # Top-nav (mobile) — di atas konten, tampil hanya di layar kecil
-    render_top_nav()
 
     page = st.session_state.get("nav_page", NAV_OPTIONS[0])
 
