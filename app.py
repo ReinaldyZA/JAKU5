@@ -433,7 +433,7 @@ def inject_css():
         display: grid;
         /* FIX — kolom fixed-width supaya semua baris align presisi: tanggal | badge | kategori | µg/m³
            sebelumnya pakai fr-ratio → spasi tidak konsisten antar baris */
-        grid-template-columns: 105px 70px 1fr 90px;
+        grid-template-columns: 105px 70px 1fr 155px;
         align-items: center;
         gap: 12px;
         padding: 10px 0;
@@ -2165,7 +2165,7 @@ def page_dashboard(data):
                     f"{r['ispu']}</span>"
                     "</div>"
                     f"<div class='pred-cat' style='color:{warna};'>{kat2}</div>"
-                    f"<div class='pred-pm'>{r['pm25']} µg/m³</div>"
+                    f"<div class='pred-pm'>PM2.5 ({r['pm25']} µg/m³)</div>"
                     "</div>"
                 )
             st.markdown(rows_html, unsafe_allow_html=True)
@@ -2431,7 +2431,7 @@ def page_detail_wilayah(data):
                             <div class='pred-date'>{tanggal}</div>
                             <div><span class='pred-pill' style='background:{warna};'>{r["ispu"]}</span></div>
                             <div class='pred-cat' style='color:{warna};'>{kat2}</div>
-                            <div class='pred-pm'>{r["pm25"]} µg/m³</div>
+                            <div class='pred-pm'>PM2.5 ({r["pm25"]} µg/m³)</div>
                         </div>
                         """
                     st.markdown(rows_html, unsafe_allow_html=True)
