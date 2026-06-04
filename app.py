@@ -1215,9 +1215,17 @@ def get_logo_b64():
 
 @st.cache_data
 def rekom_img_b64(filename: str) -> str:
-    """Baca PNG rekomendasi dari assets/ lalu encode base64 (di-cache)."""
+    """Baca PNG rekomendasi dari assets/ lalu encode base64."""
+    if not filename:
+        return ""
     p = ASSETS_DIR / filename
-    return base64.b64encode(p.read_bytes()).decode() if p.exists() else ""
+    if not p.exists():
+        # Fallback: coba cari file dengan nama case-insensitive
+        for f in ASSETS_DIR.iterdir():
+            if f.name.lower() == filename.lower():
+                return base64.b64encode(f.read_bytes()).decode()
+        return ""
+    return base64.b64encode(p.read_bytes()).decode()
 
 
 def kategori_dari_ispu(ispu):
@@ -1703,26 +1711,29 @@ def render_popup_polutan():
 # ================================================================
 def render_sidebar():
     with st.sidebar:
-        # Ukuran logo diatur lewat LOGO_WIDTH_PX (ubah angkanya sesuka Anda).
-        LOGO_WIDTH_PX = 280
+        # Logo lockup (ikon + wordmark + subtitle) sudah jadi satu di logo_jaku.svg.
+        # Ukuran dijaga agar tidak selebar sidebar, diberi padding atas + jarak bawah
+        # supaya tidak menempel/menumpuk dengan menu navigasi di bawahnya.
+        LOGO_WIDTH_PX = 184
         logo_svg = ASSETS_DIR / "logo_jaku.svg"
         if logo_svg.exists():
             raw_svg = logo_svg.read_text(encoding="utf-8")
             raw_svg = re.sub(
                 r'<svg\b',
-                f'<svg style="width:{LOGO_WIDTH_PX}px; max-width:100%; '
+                f'<svg style="width:{LOGO_WIDTH_PX}px; max-width:88%; '
                 f'height:auto; display:block; margin:0 auto;"',
                 raw_svg, count=1,
             )
             st.markdown(
-                f'<div style="padding:10px 12px 20px;">{raw_svg}</div>',
+                f'<div style="padding:20px 16px 0 16px; text-align:center;">{raw_svg}</div>'
+                '<div style="height:18px;"></div>',
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
                 f"""
                 <div style="display:flex; align-items:center; justify-content:center;
-                            gap:10px; padding:8px 0 3px 0;">
+                            gap:10px; padding:20px 0 3px 0;">
                     {logo_jaku_svg(size=42)}
                     <span style="font-size:30px; font-weight:800; letter-spacing:-0.02em;
                                  line-height:1;">
@@ -1730,6 +1741,7 @@ def render_sidebar():
                     </span>
                 </div>
                 <div class='sidebar-subtitle'>Pantau Udara, Jaga Jakarta</div>
+                <div style="height:18px;"></div>
                 """,
                 unsafe_allow_html=True,
             )
