@@ -519,32 +519,6 @@ def inject_css():
         line-height: 1.5;
     }
 
-    /* ============ KATEGORI ISPU CARD (Edukasi) ============ */
-    .kat-card {
-        border-radius: 16px;
-        padding: 21px 18px;
-        height: 100%;
-        border: 1px solid;
-    }
-    .kat-range {
-        font-size: 27px;
-        font-weight: 800;
-        line-height: 1;
-        letter-spacing: -0.02em;
-    }
-    .kat-emoji { font-size: 27px; }
-    .kat-name {
-        font-size: 17px;
-        font-weight: 700;
-        margin-top: 14px;
-        margin-bottom: 6px;
-    }
-    .kat-desc {
-        font-size: 12px;
-        color: #334155;
-        line-height: 1.45;
-    }
-
     /* ============ STEP BAR (Simulasi) ============ */
     .step-bar {
         background: #EFF6FF;
@@ -2917,22 +2891,14 @@ def page_edukasi(data):
             unsafe_allow_html=True,
         )
 
-        kc = st.columns(5, gap="small")
-        for col, (nama, info) in zip(kc, KATEGORI_INFO.items()):
-            with col:
-                st.markdown(
-                    f"""
-                    <div class='kat-card' style='background:{info["warna_bg"]}; border-color:{info["warna"]}40;'>
-                        <div style='display:flex; justify-content:space-between; align-items:flex-start;'>
-                            <div class='kat-range' style='color:{info["warna"]};'>{info["rentang"]}</div>
-                            <div class='kat-emoji'>{info["emoji"]}</div>
-                        </div>
-                        <div class='kat-name' style='color:{info["warna"]};'>{nama}</div>
-                        <div class='kat-desc'>{info["deskripsi"]}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+        # 5 kartu kategori ISPU = SVG desain Figma (assets/ispu_kategori.svg).
+        kat_svg_b64 = rekom_img_b64("ispu_kategori.svg")
+        if kat_svg_b64:
+            st.markdown(
+                f"<img src='data:image/svg+xml;base64,{kat_svg_b64}' "
+                "alt='Kategori ISPU' style='width:100%; height:auto; display:block;'/>",
+                unsafe_allow_html=True,
+            )
 
     st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
