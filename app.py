@@ -2767,7 +2767,7 @@ def page_simulasi(data):
                 f"""
                 <div style="display:flex; align-items:center; gap:22px;
                             margin-top:8px; margin-bottom:4px; flex-wrap:wrap;">
-                    <div style="flex-shrink:0;">
+                    <div style="flex-shrink:0; min-width:100px;">
                         <div class='ispu-number' style='color:{hero_warna};'>{nilai_ispu:.0f}</div>
                         <div class='ispu-label' style='text-align:center;'>ISPU</div>
                     </div>
