@@ -345,7 +345,8 @@ def inject_css():
        Membuat dua kartu pada baris yang sama (mis. "Kualitas Udara hari ini"
        vs "per Wilayah", dan "Prediksi" vs "Tren") punya tinggi sama sehingga
        sisi bawahnya sejajar. Kolom & kartu yang BERSARANG di dalam kartu lain
-       (mis. slider di halaman Simulasi) dikecualikan agar tidak ikut meregang. */
+       (mis. slider di halaman Simulasi) dikecualikan agar tidak ikut meregang.
+       Selector mencakup beberapa kemungkinan struktur DOM Streamlit. */
     [data-testid="stHorizontalBlock"] {
         align-items: stretch !important;
     }
@@ -356,27 +357,27 @@ def inject_css():
     [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
         flex: 1 1 auto !important;
     }
-    /* Kartu yang merupakan isi langsung sebuah kolom → isi tinggi penuh kolom */
-    [data-testid="stColumn"] > [data-testid="stVerticalBlock"]
-        > [data-testid="stElementContainer"]:has(> [data-testid="stVerticalBlockBorderWrapper"]) {
+    /* Kartu (border wrapper) yang jadi isi langsung sebuah kolom → tinggi penuh */
+    [data-testid="stColumn"] > [data-testid="stVerticalBlockBorderWrapper"],
+    [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlockBorderWrapper"],
+    [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] > [data-testid="stVerticalBlockBorderWrapper"] {
+        flex: 1 1 auto !important;
+        height: 100% !important;
+    }
+    /* Elemen-container perantara (bila ada) juga ikut tumbuh */
+    [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:has(> [data-testid="stVerticalBlockBorderWrapper"]) {
         flex: 1 1 auto !important;
         display: flex !important;
         flex-direction: column !important;
     }
-    [data-testid="stColumn"] > [data-testid="stVerticalBlock"]
-        > [data-testid="stElementContainer"] > [data-testid="stVerticalBlockBorderWrapper"] {
-        height: 100% !important;
-    }
-    /* Pengecualian: kartu/elemen di DALAM kartu (kolom bersarang) tetap natural,
-       tidak ikut meregang — penting untuk slider Simulasi & kolom Detail Wilayah. */
-    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stColumn"]
-        > [data-testid="stVerticalBlock"]
-        > [data-testid="stElementContainer"] {
+    /* Pengecualian: kartu/kolom BERSARANG di dalam kartu lain tetap natural
+       (penting agar slider Simulasi & kolom Detail Wilayah tidak meregang). */
+    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
         flex: 0 0 auto !important;
-    }
-    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stColumn"]
-        [data-testid="stVerticalBlockBorderWrapper"] {
         height: auto !important;
+    }
+    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {
+        flex: 0 0 auto !important;
     }
 
     /* Map container — rounded corners untuk iframe folium */
