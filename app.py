@@ -341,44 +341,6 @@ def inject_css():
         box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
     }
 
-    /* ============ EQUAL-HEIGHT CARDS (kartu sejajar dalam 1 baris) ============
-       Kolom = anak langsung dari stHorizontalBlock. Selector ini versi-agnostik
-       (tidak bergantung nama testid kolom yang berubah antar versi Streamlit:
-       "column" vs "stColumn"). Kartu yang jadi isi langsung kolom dibuat
-       setinggi kolom sehingga dua kartu sebaris punya tinggi sama. Kartu/kolom
-       BERSARANG di dalam kartu lain (slider Simulasi dll) dikecualikan. */
-    [data-testid="stHorizontalBlock"] {
-        align-items: stretch !important;
-    }
-    [data-testid="stHorizontalBlock"] > div {
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    [data-testid="stHorizontalBlock"] > div > [data-testid="stVerticalBlock"] {
-        flex: 1 1 auto !important;
-    }
-    /* Kartu border langsung di kolom → tinggi penuh (beberapa varian struktur) */
-    [data-testid="stHorizontalBlock"] > div > [data-testid="stVerticalBlockBorderWrapper"],
-    [data-testid="stHorizontalBlock"] > div > [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlockBorderWrapper"],
-    [data-testid="stHorizontalBlock"] > div > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] > [data-testid="stVerticalBlockBorderWrapper"] {
-        flex: 1 1 auto !important;
-        height: 100% !important;
-    }
-    [data-testid="stHorizontalBlock"] > div > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:has(> [data-testid="stVerticalBlockBorderWrapper"]) {
-        flex: 1 1 auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    /* Pengecualian: kartu/kolom BERSARANG di dalam kartu lain tetap natural
-       (penting agar slider Simulasi & kolom Detail Wilayah tidak meregang). */
-    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] > div [data-testid="stVerticalBlockBorderWrapper"] {
-        flex: 0 0 auto !important;
-        height: auto !important;
-    }
-    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] > div > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {
-        flex: 0 0 auto !important;
-    }
-
     /* Map container — rounded corners untuk iframe folium */
     iframe[title="streamlit_folium.st_folium"] {
         border-radius: 12px;
@@ -1909,11 +1871,17 @@ def page_dashboard(data):
         )
 
     # ──────────────── ROW 1: HERO ISPU + PETA WILAYAH ────────────────
+    # Tinggi tetap kartu per baris supaya dua kartu sebaris SEJAJAR bawahnya.
+    # Cara CSS equal-height tidak andal lintas versi Streamlit, jadi dipakai
+    # tinggi tetap. >>> Kalau ada kartu yang muncul scrollbar di dalamnya,
+    # NAIKKAN angkanya; kalau terlalu banyak ruang kosong, TURUNKAN. <<<
+    DASH_ROW1_H = 580   # baris 1: "Kualitas Udara hari ini" & "per Wilayah"
+    DASH_ROW2_H = 440   # baris 2: "Prediksi ISPU" & "Tren ISPU"
     col_left, col_right = st.columns([1.18, 1], gap="medium")
 
     # ─── KIRI: Hero ISPU ───
     with col_left:
-        with st.container(border=True):           # ← FIX #3
+        with st.container(border=True, height=DASH_ROW1_H):   # tinggi tetap → sejajar
             ispu_avg = 78
             kat = kategori_dari_ispu(ispu_avg)
             info = KATEGORI_INFO[kat]
@@ -2047,7 +2015,7 @@ def page_dashboard(data):
             if rekom_b64:
                 st.markdown(
                     f"<img src='data:image/png;base64,{rekom_b64}' alt='Rekomendasi Aktivitas' "
-                    f"style='width:100%; height:auto; display:block; margin-top:18px;'/>",
+                    f"style='width:100%; max-width:620px; height:auto; display:block; margin-top:18px;'/>",
                     unsafe_allow_html=True,
                 )
             else:
@@ -2065,7 +2033,7 @@ def page_dashboard(data):
                 )
     # ─── KANAN: Peta wilayah + daftar status + legend + tombol ───
     with col_right:
-        with st.container(border=True):           # ← FIX #3
+        with st.container(border=True, height=DASH_ROW1_H):   # tinggi tetap → sejajar
             st.markdown(
                 "<div class='card-title'>Kualitas Udara per Wilayah di Jakarta</div>",
                 unsafe_allow_html=True,
@@ -2175,7 +2143,7 @@ def page_dashboard(data):
 
     # ─── Prediksi 7 hari mendatang ───
     with pcol1:
-        with st.container(border=True):           # ← FIX #3
+        with st.container(border=True, height=DASH_ROW2_H):   # tinggi tetap → sejajar
             st.markdown(
                 "<div class='card-title'>Prediksi ISPU di Jakarta "
                 "(7 Hari Mendatang)</div>",
@@ -2204,7 +2172,7 @@ def page_dashboard(data):
 
     # ─── Tren 7 hari terakhir (chart) ───
     with pcol2:
-        with st.container(border=True):           # ← FIX #3
+        with st.container(border=True, height=DASH_ROW2_H):   # tinggi tetap → sejajar
             st.markdown(
                 "<div class='card-title'>Tren ISPU di Jakarta (7 Hari Terakhir)</div>",
                 unsafe_allow_html=True,
@@ -2418,7 +2386,7 @@ def page_detail_wilayah(data):
                     if rekom_b64:
                         st.markdown(
                             f"<img src='data:image/png;base64,{rekom_b64}' alt='Rekomendasi Aktivitas' "
-                            f"style='width:100%; height:auto; display:block; margin-top:8px;'/>",
+                            f"style='width:100%; max-width:620px; height:auto; display:block; margin-top:8px;'/>",
                             unsafe_allow_html=True,
                         )
                     else:
@@ -2878,7 +2846,7 @@ def page_simulasi(data):
             if rekom_b64:
                 st.markdown(
                     f"<img src='data:image/png;base64,{rekom_b64}' alt='Rekomendasi Aktivitas' "
-                    f"style='width:100%; height:auto; display:block; margin-top:18px;'/>",
+                    f"style='width:100%; max-width:620px; height:auto; display:block; margin-top:18px;'/>",
                     unsafe_allow_html=True,
                 )
             else:
