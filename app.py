@@ -2003,7 +2003,29 @@ def page_dashboard(data):
                 unsafe_allow_html=True,
             )
 
- # ─── KANAN: Peta wilayah + legend + tombol ───
+            # ─── Rekomendasi Aktivitas (gambar PNG dari assets sesuai
+            #     kategori rata-rata; ISPU 78 → "Sedang" → rekom_sedang.png) ───
+            rekom_b64 = rekom_img_b64(REKOM_IMG.get(kat, ""))
+            if rekom_b64:
+                st.markdown(
+                    f"<img src='data:image/png;base64,{rekom_b64}' alt='Rekomendasi Aktivitas' "
+                    f"style='width:100%; height:auto; display:block; margin-top:18px;'/>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f"""
+                    <div style="background:{info['warna_bg']}; border:1.5px solid {info['warna']};
+                                border-radius:16px; padding:18px 20px; margin-top:18px;">
+                        <div style="font-size:16px; font-weight:700; color:{info['warna']}; margin-bottom:8px;">
+                            Rekomendasi Aktivitas
+                        </div>
+                        <div style="font-size:13.5px; color:#1E293B; line-height:1.55;">{info['rekomendasi']}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+    # ─── KANAN: Peta wilayah + legend + tombol ───
     with col_right:
         with st.container(border=True):           # ← FIX #3
             st.markdown(
@@ -2795,8 +2817,7 @@ def page_simulasi(data):
                 st.markdown(
                     f"""
                     <div style="background:{rekom_bg}; border:1.5px solid {rekom_border};
-                        border-radius:16px; padding:18px 20px;
-                        margin-top:18px; margin-bottom:30px;">
+                                border-radius:16px; padding:18px 20px; margin-top:18px;">
                         <div style="font-size:18px; font-weight:700; color:{rekom_color};
                                     margin-bottom:10px;">
                             Rekomendasi Aktivitas
