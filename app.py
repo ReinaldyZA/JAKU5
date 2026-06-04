@@ -2198,11 +2198,15 @@ def page_dashboard(data):
                 hovertemplate="<b>%{x}</b><br>ISPU: %{y}<extra></extra>",
                 showlegend=False,
             ))
+            # Garis & label threshold kategori — mengikuti posisi pada desain
+            # Figma (5 kategori). Catatan: posisi label = penanda zona kategori
+            # agar mudah dibaca, bukan batas ISPU resmi yang presisi.
             for nilai, label, warna in [
                 (50, "Baik", "#16A34A"),
                 (100, "Sedang", "#2563EB"),
-                (200, "Tidak Sehat", "#F59E0B"),
-                (300, "Sangat Tidak Sehat", "#EF4444"),
+                (150, "Tidak Sehat", "#F59E0B"),
+                (200, "Sangat Tidak Sehat", "#EF4444"),
+                (300, "Berbahaya", "#7C3AED"),
             ]:
                 fig.add_hline(y=nilai, line_dash="dot",
                               line_color="#E2E8F0", line_width=1)
@@ -2230,7 +2234,7 @@ def page_dashboard(data):
                 yaxis=dict(
                     range=[0, 320], gridcolor="#F1F5F9", showline=False,
                     tickfont=dict(size=11, color="#94A3B8"),
-                    tickvals=[0, 50, 100, 150, 200, 300],
+                    tickvals=[0, 50, 100, 150, 200, 250, 300],
                 ),
             )
             st.plotly_chart(fig, use_container_width=True,
@@ -2465,8 +2469,9 @@ def page_detail_wilayah(data):
                     for nilai, label, warna in [
                         (50, "Baik", "#16A34A"),
                         (100, "Sedang", "#2563EB"),
-                        (200, "Tidak Sehat", "#F59E0B"),
-                        (300, "Sangat Tidak Sehat", "#EF4444"),
+                        (150, "Tidak Sehat", "#F59E0B"),
+                        (200, "Sangat Tidak Sehat", "#EF4444"),
+                        (300, "Berbahaya", "#7C3AED"),
                     ]:
                         fig.add_annotation(
                             x=1.0, xref="paper", y=nilai,
@@ -2486,7 +2491,7 @@ def page_detail_wilayah(data):
                             gridcolor="#F1F5F9",
                             showline=False,
                             tickfont=dict(size=11, color="#94A3B8"),
-                            tickvals=[0, 50, 100, 150, 200, 300],
+                            tickvals=[0, 50, 100, 150, 200, 250, 300],
                         ),
                     )
                     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
