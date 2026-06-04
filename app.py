@@ -2069,7 +2069,7 @@ def page_dashboard(data):
                 # (kanan-bawah, sejajar di samping peta) sesuai mockup,
                 # bukan di baris terpisah di bawah peta + legend.
                 # Style: outline pill (bukan solid primary) — match mockup.
-                 st.markdown(
+                st.markdown(
                     "<div style='margin-top:19px;'></div>",
                     unsafe_allow_html=True,
                 )
