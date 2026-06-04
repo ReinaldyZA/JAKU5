@@ -2738,7 +2738,7 @@ def page_simulasi(data):
         if is_neutral:
             hero_warna = "#94A3B8"
             hero_emoji_svg = (
-                '<svg width="64" height="80" viewBox="0 0 100 100" '
+                '<svg width="64" height="150" viewBox="0 0 100 100" '
                 'xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">'
                 '<circle cx="50" cy="50" r="46" fill="#CBD5E1"/>'
                 '<circle cx="36" cy="42" r="4" fill="white"/>'
