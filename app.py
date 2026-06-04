@@ -2738,7 +2738,7 @@ def page_simulasi(data):
         if is_neutral:
             hero_warna = "#94A3B8"
             hero_emoji_svg = (
-                '<svg width="64" height="150" viewBox="0 0 100 100" '
+                '<svg width="64" height="64" viewBox="0 0 100 100" '
                 'xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">'
                 '<circle cx="50" cy="50" r="46" fill="#CBD5E1"/>'
                 '<circle cx="36" cy="42" r="4" fill="white"/>'
@@ -2795,8 +2795,7 @@ def page_simulasi(data):
                 st.markdown(
                     f"""
                     <div style="background:{rekom_bg}; border:1.5px solid {rekom_border};
-                        border-radius:16px; padding:18px 20px;
-                        margin-top:18px; margin-bottom:24px;">
+                                border-radius:16px; padding:18px 20px; margin-top:18px;">
                         <div style="font-size:18px; font-weight:700; color:{rekom_color};
                                     margin-bottom:10px;">
                             Rekomendasi Aktivitas
