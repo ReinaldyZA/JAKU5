@@ -190,29 +190,11 @@ def inject_css():
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
-        padding-top: 0 !important;
+        padding-top: 16px;
         min-width: 300px;
     }
-    /* Streamlit membungkus isi sidebar dalam beberapa div bersarang —
-       semua layer harus di-reset ke 0 supaya logo benar-benar mentok atas */
-    [data-testid="stSidebar"] > div:first-child,
-    [data-testid="stSidebar"] > div > div:first-child,
-    [data-testid="stSidebar"] > div > div > div:first-child,
-    section[data-testid="stSidebar"] > div,
-    section[data-testid="stSidebar"] > div > div {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-    }
-    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        gap: 0 !important;
-        padding-top: 0 !important;
-    }
-    [data-testid="stSidebar"] .element-container {
-        margin-bottom: 0 !important;
-    }
-    [data-testid="stSidebar"] .stMarkdown {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 16px;
     }
 
     .sidebar-logo {
@@ -1231,18 +1213,11 @@ def get_logo_b64():
     return ""
 
 
+@st.cache_data
 def rekom_img_b64(filename: str) -> str:
-    """Baca PNG rekomendasi dari assets/ lalu encode base64."""
-    if not filename:
-        return ""
+    """Baca PNG rekomendasi dari assets/ lalu encode base64 (di-cache)."""
     p = ASSETS_DIR / filename
-    if not p.exists():
-        # Fallback: coba cari file dengan nama case-insensitive
-        for f in ASSETS_DIR.iterdir():
-            if f.name.lower() == filename.lower():
-                return base64.b64encode(f.read_bytes()).decode()
-        return ""
-    return base64.b64encode(p.read_bytes()).decode()
+    return base64.b64encode(p.read_bytes()).decode() if p.exists() else ""
 
 
 def kategori_dari_ispu(ispu):
@@ -1740,7 +1715,7 @@ def render_sidebar():
                 raw_svg, count=1,
             )
             st.markdown(
-                f'<div style="padding:0px 16px 8px 16px;">{raw_svg}</div>',
+                f'<div style="padding:10px 12px 20px;">{raw_svg}</div>',
                 unsafe_allow_html=True,
             )
         else:
@@ -1773,9 +1748,8 @@ def render_sidebar():
             default_index=0,
             styles={
                 "container": {
-                    "padding": "0px 8px",
+                    "padding": "4px 8px",
                     "background-color": "#FFFFFF",
-                    "margin-top": "4px",
                 },
                 "icon": {"font-size": "17px"},
                 "nav-link": {
@@ -1783,7 +1757,7 @@ def render_sidebar():
                     "font-weight": "500",
                     "color": "#475569",
                     "padding": "11px 16px",
-                    "margin": "2px 0",
+                    "margin": "3px 0",
                     "border-radius": "10px",
                     "--hover-color": "#F1F5F9",
                 },
@@ -1796,7 +1770,7 @@ def render_sidebar():
         )
 
         # Spacer untuk dorong footer ke bawah
-        st.markdown("<div style='flex:1; min-height:24px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='flex:1; min-height:96px;'></div>", unsafe_allow_html=True)
 
         # Footer sidebar
         st.markdown(
