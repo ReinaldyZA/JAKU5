@@ -2003,7 +2003,7 @@ def page_dashboard(data):
                 unsafe_allow_html=True,
             )
 
-    # ─── KANAN: Peta wilayah + legend + tombol ───
+ # ─── KANAN: Peta wilayah + legend + tombol ───
     with col_right:
         with st.container(border=True):           # ← FIX #3
             st.markdown(
@@ -2061,21 +2061,23 @@ def page_dashboard(data):
                 st_folium(m, height=290, use_container_width=True,
                           returned_objects=[])
 
-                  with mc2:
-            render_legend_safe(KATEGORI_INFO)
-        
-            st.markdown(
-                "<div style='margin-top:19px; margin-bottom:24px;'></div>",
-                unsafe_allow_html=True,
-            )
-        
-            if st.button(
-                "Lihat Selengkapnya  →",
-                key="btn_selengkapnya",
-                use_container_width=True
-            ):
-                st.session_state["jump_to_detail"] = True
-                st.rerun()
+            with mc2:
+                # FIX #1 + #2 — legend reliable via render_legend_safe
+                render_legend_safe(KATEGORI_INFO)
+
+                # FIX — tombol "Lihat Selengkapnya" sekarang di KOLOM LEGEND
+                # (kanan-bawah, sejajar di samping peta) sesuai mockup,
+                # bukan di baris terpisah di bawah peta + legend.
+                # Style: outline pill (bukan solid primary) — match mockup.
+                st.markdown(
+                    "<div style='margin-top:19px;'></div>",
+                    unsafe_allow_html=True,
+                )
+                if st.button("Lihat Selengkapnya  →",
+                             key="btn_selengkapnya",
+                             use_container_width=True):
+                    st.session_state["jump_to_detail"] = True
+                    st.rerun()
 
     # ──────────────── ROW 2: PREDIKSI + TREN ────────────────
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
