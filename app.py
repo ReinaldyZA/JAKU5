@@ -2795,7 +2795,8 @@ def page_simulasi(data):
                 st.markdown(
                     f"""
                     <div style="background:{rekom_bg}; border:1.5px solid {rekom_border};
-                                border-radius:16px; padding:18px 20px; margin-top:18px;">
+                        border-radius:16px; padding:18px 20px;
+                        margin-top:18px; margin-bottom:30px;">
                         <div style="font-size:18px; font-weight:700; color:{rekom_color};
                                     margin-bottom:10px;">
                             Rekomendasi Aktivitas
