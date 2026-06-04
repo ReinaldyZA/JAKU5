@@ -2280,25 +2280,29 @@ def page_detail_wilayah(data):
             kat = row["kategori"]
             info = KATEGORI_INFO[kat]
 
-            # Kualitas udara + Rekomendasi
-            c1, c2 = st.columns([1.1, 1], gap="medium")
+            # Kualitas udara + Rekomendasi Aktivitas dalam SATU kartu (sesuai Figma):
+            # kiri = hero ISPU + polutan dominan + grid polutan; kanan = kotak
+            # Rekomendasi Aktivitas berupa gambar PNG dari assets sesuai kategori.
+            with st.container(border=True):
+                st.markdown(
+                    f"<div class='card-title'>Kualitas Udara {wilayah}</div>",
+                    unsafe_allow_html=True,
+                )
 
-            # ---- Card kualitas udara (FIX #3: st.container(border=True))
-            with c1:
-                with st.container(border=True):
-                    st.markdown(
-                        f"<div class='card-title'>Kualitas Udara {wilayah}</div>",
-                        unsafe_allow_html=True,
-                    )
+                left_col, right_col = st.columns([1, 1], gap="large")
+
+                # ── Kiri: hero + polutan dominan + grid polutan ──
+                with left_col:
                     st.markdown(
                         f"""
-                        <div class='ispu-hero'>
-                            <div>
+                        <div style="display:flex; align-items:center; gap:20px;
+                                    margin-top:4px; flex-wrap:wrap;">
+                            <div style="flex-shrink:0;">
                                 <div class='ispu-number' style='color:{info["warna"]};'>{row["ispu"]}</div>
-                                <div class='ispu-label'>ISPU</div>
+                                <div class='ispu-label' style='text-align:center;'>ISPU</div>
                             </div>
-                            <div>
-                                <div class='ispu-emoji'>{info["emoji"]}</div>
+                            <div class='ispu-emoji' style='margin-bottom:0;'>{ispu_emoji_svg(kat, size=56)}</div>
+                            <div style="flex:1; min-width:160px;">
                                 <div class='ispu-status' style='color:{info["warna"]};'>Udara {kat}</div>
                                 <div class='ispu-desc'>{info["deskripsi"]}</div>
                             </div>
@@ -2307,20 +2311,20 @@ def page_detail_wilayah(data):
                         unsafe_allow_html=True,
                     )
 
-                    pdc1, pdc2 = st.columns([2, 1])
+                    pdc1, pdc2 = st.columns([1, 1])
                     with pdc1:
                         st.markdown(
                             f"""
-                            <div class='polutan-dominan-row' style='border-top:1px solid #F1F5F9; padding-top:16px; margin-top:19px;'>
-                                <div class='polutan-dominan-text'>
-                                    🌿 <strong>Polutan dominan:</strong> PM2.5 ({row["pm25"]} µg/m³)
-                                </div>
+                            <div style='display:flex; align-items:center; gap:8px;
+                                        padding-top:16px; font-size:14px; color:#0F172A;'>
+                                <span style='color:#16A34A; font-size:16px;'>🌿</span>
+                                <span><strong>Polutan dominan:</strong> PM2.5 ({row["pm25"]} µg/m³)</span>
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
                     with pdc2:
-                        st.markdown("<div style='padding-top:19px;'></div>", unsafe_allow_html=True)
+                        st.markdown("<div style='padding-top:10px;'></div>", unsafe_allow_html=True)
                         if st.button("ⓘ Lihat penjelasan polutan", key=f"btn_info_{wilayah}", use_container_width=True):
                             render_popup_polutan()
 
@@ -2338,32 +2342,29 @@ def page_detail_wilayah(data):
                         unsafe_allow_html=True,
                     )
 
-            # ---- Rekomendasi aktivitas (4 item dalam 2x2 grid)
-            with c2:
-                with st.container(border=True):
-                    st.markdown("<div class='card-title'>Rekomendasi Aktivitas</div>", unsafe_allow_html=True)
-
-                    rekomendasi = [
-                        ("🏃‍♀️", "Olahraga Luar Ruangan", "Aktivitas luar ruangan aman dilakukan."),
-                        ("😷",   "Gunakan Masker",         "Gunakan masker jika Anda sensitif terhadap polusi."),
-                        ("👵",   "Kelompok Sensitif",      "Jaga kesehatan dan hindari area dengan polusi tinggi."),
-                        ("🌳",   "Buka Jendela",           "Sirkulasi udara di dalam ruangan masih aman."),
-                    ]
-                    gc1, gc2 = st.columns(2, gap="small")
-                    for idx, (icon, judul, desc) in enumerate(rekomendasi):
-                        with (gc1 if idx % 2 == 0 else gc2):
-                            st.markdown(
-                                f"""
-                                <div class='rekom-card' style='margin-bottom:10px;'>
-                                    <div class='rekom-icon'>{icon}</div>
-                                    <div>
-                                        <div class='rekom-title'>{judul}</div>
-                                        <div class='rekom-desc'>{desc}</div>
-                                    </div>
+                # ── Kanan: Rekomendasi Aktivitas (PNG dari assets sesuai kategori) ──
+                with right_col:
+                    rekom_b64 = rekom_img_b64(REKOM_IMG.get(kat, ""))
+                    if rekom_b64:
+                        st.markdown(
+                            f"<img src='data:image/png;base64,{rekom_b64}' alt='Rekomendasi Aktivitas' "
+                            f"style='width:100%; height:auto; display:block; margin-top:8px;'/>",
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        # Fallback teks bila gambar tidak ditemukan
+                        st.markdown(
+                            f"""
+                            <div style="background:{info['warna_bg']}; border:1.5px solid {info['warna']};
+                                        border-radius:16px; padding:18px 20px; margin-top:8px;">
+                                <div style="font-size:16px; font-weight:700; color:{info['warna']}; margin-bottom:8px;">
+                                    Rekomendasi Aktivitas
                                 </div>
-                                """,
-                                unsafe_allow_html=True,
-                            )
+                                <div style="font-size:13.5px; color:#1E293B; line-height:1.55;">{info['rekomendasi']}</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
 
             st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
