@@ -190,42 +190,11 @@ def inject_css():
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
-        padding-top: 0 !important;
+        padding-top: 16px;
         min-width: 300px;
     }
-    /* Header bawaan sidebar (area tombol collapse) menyisakan ruang kosong
-       di atas — nol-kan supaya logo benar-benar mentok ke atas. */
-    [data-testid="stSidebarHeader"],
-    div[data-testid="stSidebarHeader"] {
-        padding: 0 !important;
-        height: 0 !important;
-        min-height: 0 !important;
-    }
-    [data-testid="stSidebarUserContent"],
-    [data-testid="stSidebarContent"] {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-    }
-    /* Streamlit membungkus isi sidebar dalam beberapa div bersarang —
-       semua layer harus di-reset ke 0 supaya logo benar-benar mentok atas */
-    [data-testid="stSidebar"] > div:first-child,
-    [data-testid="stSidebar"] > div > div:first-child,
-    [data-testid="stSidebar"] > div > div > div:first-child,
-    section[data-testid="stSidebar"] > div,
-    section[data-testid="stSidebar"] > div > div {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-    }
-    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        gap: 0 !important;
-        padding-top: 0 !important;
-    }
-    [data-testid="stSidebar"] .element-container {
-        margin-bottom: 0 !important;
-    }
-    [data-testid="stSidebar"] .stMarkdown {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 16px;
     }
 
     .sidebar-logo {
@@ -339,45 +308,6 @@ def inject_css():
     }
     [data-testid="stVerticalBlockBorderWrapper"]:hover {
         box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
-    }
-
-    /* ============ EQUAL-HEIGHT CARDS (kartu sejajar dalam 1 baris) ============
-       Membuat dua kartu pada baris yang sama (mis. "Kualitas Udara hari ini"
-       vs "per Wilayah", dan "Prediksi" vs "Tren") punya tinggi sama sehingga
-       sisi bawahnya sejajar. Kolom & kartu yang BERSARANG di dalam kartu lain
-       (mis. slider di halaman Simulasi) dikecualikan agar tidak ikut meregang.
-       Selector mencakup beberapa kemungkinan struktur DOM Streamlit. */
-    [data-testid="stHorizontalBlock"] {
-        align-items: stretch !important;
-    }
-    [data-testid="stColumn"] {
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
-        flex: 1 1 auto !important;
-    }
-    /* Kartu (border wrapper) yang jadi isi langsung sebuah kolom → tinggi penuh */
-    [data-testid="stColumn"] > [data-testid="stVerticalBlockBorderWrapper"],
-    [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlockBorderWrapper"],
-    [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] > [data-testid="stVerticalBlockBorderWrapper"] {
-        flex: 1 1 auto !important;
-        height: 100% !important;
-    }
-    /* Elemen-container perantara (bila ada) juga ikut tumbuh */
-    [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:has(> [data-testid="stVerticalBlockBorderWrapper"]) {
-        flex: 1 1 auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    /* Pengecualian: kartu/kolom BERSARANG di dalam kartu lain tetap natural
-       (penting agar slider Simulasi & kolom Detail Wilayah tidak meregang). */
-    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
-        flex: 0 0 auto !important;
-        height: auto !important;
-    }
-    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {
-        flex: 0 0 auto !important;
     }
 
     /* Map container — rounded corners untuk iframe folium */
@@ -1285,17 +1215,9 @@ def get_logo_b64():
 
 @st.cache_data
 def rekom_img_b64(filename: str) -> str:
-    """Baca PNG rekomendasi dari assets/ lalu encode base64."""
-    if not filename:
-        return ""
+    """Baca PNG rekomendasi dari assets/ lalu encode base64 (di-cache)."""
     p = ASSETS_DIR / filename
-    if not p.exists():
-        # Fallback: coba cari file dengan nama case-insensitive
-        for f in ASSETS_DIR.iterdir():
-            if f.name.lower() == filename.lower():
-                return base64.b64encode(f.read_bytes()).decode()
-        return ""
-    return base64.b64encode(p.read_bytes()).decode()
+    return base64.b64encode(p.read_bytes()).decode() if p.exists() else ""
 
 
 def kategori_dari_ispu(ispu):
@@ -1781,29 +1703,26 @@ def render_popup_polutan():
 # ================================================================
 def render_sidebar():
     with st.sidebar:
-        # Logo lockup (ikon + wordmark + subtitle) sudah jadi satu di logo_jaku.svg.
-        # Ukuran dijaga agar tidak selebar sidebar, diberi padding atas + jarak bawah
-        # supaya tidak menempel/menumpuk dengan menu navigasi di bawahnya.
-        LOGO_WIDTH_PX = 184
+        # Ukuran logo diatur lewat LOGO_WIDTH_PX (ubah angkanya sesuka Anda).
+        LOGO_WIDTH_PX = 280
         logo_svg = ASSETS_DIR / "logo_jaku.svg"
         if logo_svg.exists():
             raw_svg = logo_svg.read_text(encoding="utf-8")
             raw_svg = re.sub(
                 r'<svg\b',
-                f'<svg style="width:{LOGO_WIDTH_PX}px; max-width:88%; '
+                f'<svg style="width:{LOGO_WIDTH_PX}px; max-width:100%; '
                 f'height:auto; display:block; margin:0 auto;"',
                 raw_svg, count=1,
             )
             st.markdown(
-                f'<div style="padding:8px 16px 0 16px; text-align:center;">{raw_svg}</div>'
-                '<div style="height:18px;"></div>',
+                f'<div style="padding:10px 12px 20px;">{raw_svg}</div>',
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
                 f"""
                 <div style="display:flex; align-items:center; justify-content:center;
-                            gap:10px; padding:20px 0 3px 0;">
+                            gap:10px; padding:8px 0 3px 0;">
                     {logo_jaku_svg(size=42)}
                     <span style="font-size:30px; font-weight:800; letter-spacing:-0.02em;
                                  line-height:1;">
@@ -1811,7 +1730,6 @@ def render_sidebar():
                     </span>
                 </div>
                 <div class='sidebar-subtitle'>Pantau Udara, Jaga Jakarta</div>
-                <div style="height:18px;"></div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -1960,50 +1878,40 @@ def page_dashboard(data):
                 )
 
             with hero_illust:
-                # Ilustrasi Jakarta dari PNG (assets/ilustrasi_jakarta.png).
-                # Fallback ke SVG bawaan bila file tidak ditemukan.
-                ilust_b64 = rekom_img_b64("ilustrasi_jakarta.png")
-                if ilust_b64:
-                    st.markdown(
-                        "<div style='text-align:center; padding-top:2px;'>"
-                        "<div style='background:#FFFFFF; border:1px solid #EEF2F7; "
-                        "border-radius:14px; padding:8px; display:inline-block; "
-                        "box-shadow:0 1px 3px rgba(15,23,42,0.04);'>"
-                        f"<img src='data:image/png;base64,{ilust_b64}' "
-                        "style='width:150px; height:auto; border-radius:8px; display:block;'/>"
-                        "</div>"
-                        "<div style='font-size:13px; color:#64748B; font-weight:500; "
-                        "margin-top:5px;'>DKI Jakarta</div>"
-                        "</div>",
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.markdown(
-                        "<div style='text-align:center; padding-top:6px;'>"
-                        f"{jakarta_skyline_svg(width=180)}"
-                        "<div style='font-size:13px; color:#64748B; "
-                        "font-weight:500; margin-top:3px;'>DKI Jakarta</div>"
-                        "</div>",
-                        unsafe_allow_html=True,
-                    )
+                # Ilustrasi Jakarta + caption — center di kolomnya sendiri,
+                # tidak lagi tergantung margin-left:auto yang plin-plan.
+                st.markdown(
+                    "<div style='text-align:center; padding-top:6px;'>"
+                    f"{jakarta_skyline_svg(width=180)}"
+                    "<div style='font-size:13px; color:#64748B; "
+                    "font-weight:500; margin-top:3px;'>DKI Jakarta</div>"
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
 
-            # ─── Polutan dominan (kiri) + tombol "Lihat penjelasan polutan"
-            #     (kanan mentok, sejajar satu baris) ───
+            # ─── Polutan dominan strip + tombol info polutan ───
+            # FIX — sebelumnya tombol "floating" di tengah card karena
+            # padding-top fix tidak match dengan baseline polutan strip.
+            # Sekarang: garis separator full-width via markdown, lalu
+            # strip pakai 2-column dengan vertical_alignment="center"
+            # supaya tombol & teks polutan benar-benar sejajar baseline.
             st.markdown(
-                "<div style='margin-top:12px;'></div>",
+                "<div style='border-top:1px solid #F1F5F9; "
+                "margin-top:18px;'></div>",
                 unsafe_allow_html=True,
             )
 
             try:
-                pdc1, pdc2 = st.columns([2, 1.15], vertical_alignment="center")
+                pdc1, pdc2 = st.columns([1.6, 1], vertical_alignment="center")
             except TypeError:
                 # Fallback untuk Streamlit < 1.36 yang tidak punya vertical_alignment
-                pdc1, pdc2 = st.columns([2, 1.15])
+                pdc1, pdc2 = st.columns([1.6, 1])
 
             with pdc1:
                 st.markdown(
                     "<div style='display:flex; align-items:center; "
-                    "gap:8px; font-size:15px; color:#0F172A;'>"
+                    "gap:8px; padding-top:14px; font-size:15px; "
+                    "color:#0F172A;'>"
                     "<span style='color:#16A34A; font-size:17px;'>🌿</span>"
                     "<span><strong>Polutan dominan:</strong>&nbsp; "
                     "PM2.5 (24 µg/m³)</span>"
@@ -2011,10 +1919,10 @@ def page_dashboard(data):
                     unsafe_allow_html=True,
                 )
             with pdc2:
-                # use_container_width → tombol mengisi kolom kanan → posisinya
-                # mentok ke kanan kartu, sejajar dengan teks polutan dominan.
+                # Tombol natural-width; CSS di awal file akan right-align
+                # via :has selector untuk kolom yang memuat tombol ini.
                 if st.button("ⓘ  Lihat penjelasan polutan",
-                             key="btn_info_dashboard", use_container_width=True):
+                             key="btn_info_dashboard"):
                     render_popup_polutan()
 
             # 6 polutan compact — SATU markdown call
@@ -2042,29 +1950,7 @@ def page_dashboard(data):
                 unsafe_allow_html=True,
             )
 
-            # ─── Rekomendasi Aktivitas (gambar PNG dari assets sesuai
-            #     kategori rata-rata; ISPU 78 → "Sedang" → rekom_sedang.png) ───
-            rekom_b64 = rekom_img_b64(REKOM_IMG.get(kat, ""))
-            if rekom_b64:
-                st.markdown(
-                    f"<img src='data:image/png;base64,{rekom_b64}' alt='Rekomendasi Aktivitas' "
-                    f"style='width:100%; height:auto; display:block; margin-top:18px;'/>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    f"""
-                    <div style="background:{info['warna_bg']}; border:1.5px solid {info['warna']};
-                                border-radius:16px; padding:18px 20px; margin-top:18px;">
-                        <div style="font-size:16px; font-weight:700; color:{info['warna']}; margin-bottom:8px;">
-                            Rekomendasi Aktivitas
-                        </div>
-                        <div style="font-size:13.5px; color:#1E293B; line-height:1.55;">{info['rekomendasi']}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-    # ─── KANAN: Peta wilayah + daftar status + legend + tombol ───
+    # ─── KANAN: Peta wilayah + legend + tombol ───
     with col_right:
         with st.container(border=True):           # ← FIX #3
             st.markdown(
@@ -2072,98 +1958,68 @@ def page_dashboard(data):
                 unsafe_allow_html=True,
             )
 
-            # Peta (kiri) + daftar status wilayah & legend (kanan)
-            mc1, mc2 = st.columns([1.4, 1], gap="medium")
+            # Peta + legend side-by-side
+            mc1, mc2 = st.columns([1.9, 1], gap="small")
             with mc1:
-                # Peta dengan tile berwarna (CartoDB Voyager) seperti desain.
+                # FIX — zoom 11 → 12 dan max_bounds untuk benar-benar kunci ke DKI.
+                # Sebelumnya fit_bounds tidak cukup ketat → Tangerang & Bekasi
+                # masih besar di viewport.
                 m = folium.Map(
-                    location=[-6.17, 106.83],
-                    zoom_start=11,
-                    tiles=None,
+                    location=[-6.2088, 106.8456],
+                    zoom_start=12,
+                    tiles="CartoDB positron",
                     zoom_control=False,
                     scrollWheelZoom=False,
                     dragging=True,
-                    min_zoom=10,
+                    min_zoom=11,
                     max_zoom=14,
                 )
-                folium.TileLayer(
-                    tiles="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-                    attr="&copy; OpenStreetMap contributors &copy; CARTO",
-                    name="Voyager",
-                    control=False,
-                ).add_to(m)
-
-                # Koordinat tampilan: Kep. Seribu (lokasi asli jauh di utara,
-                # ~-5.75) digeser ke area teluk utara Jakarta agar lingkarannya
-                # tetap tampil dalam peta DKI seperti desain. Data asli tak diubah.
-                display_coords = {"Kep. Seribu": (-6.03, 106.80)}
-
-                bounds = []
+                # Hard-lock viewport ke DKI Jakarta
+                m.options['maxBounds'] = [[-6.40, 106.65], [-6.05, 107.05]]
+                m.options['maxBoundsViscosity'] = 1.0
+                m.fit_bounds([[-6.30, 106.78], [-6.10, 106.95]])
                 for _, row in data["wilayah"].iterrows():
-                    lat, lon = display_coords.get(
-                        row["wilayah"], (row["lat"], row["lon"])
-                    )
                     kat_w = row["kategori"]
                     warna = KATEGORI_INFO.get(
                         kat_w, KATEGORI_INFO["Sedang"]
                     )["warna"]
-                    bounds.append([lat, lon])
-                    # Lingkaran berwarna kategori
                     folium.CircleMarker(
-                        location=[lat, lon],
-                        radius=23,
+                        location=[row["lat"], row["lon"]],
+                        radius=24,
                         color="white",
                         weight=3,
                         fill=True,
                         fillColor=warna,
                         fillOpacity=0.95,
-                        tooltip=f"{row['wilayah']}: {row['ispu']} ({kat_w})",
+                        tooltip=f"{row['wilayah']}: {row['ispu']}",
                     ).add_to(m)
-                    # Label skor ISPU di tengah lingkaran
                     folium.map.Marker(
-                        [lat, lon],
+                        [row["lat"], row["lon"]],
                         icon=folium.DivIcon(
-                            icon_size=(46, 46),
-                            icon_anchor=(23, 23),
+                            icon_size=(40, 40),
+                            icon_anchor=(20, 20),
                             html=(
-                                "<div style='font-size:13px; font-weight:800; "
+                                "<div style='font-size:12px; font-weight:800; "
                                 "color:white; text-align:center; "
-                                f"line-height:46px;'>{row['ispu']}</div>"
+                                f"line-height:40px;'>{row['ispu']}</div>"
                             ),
                         ),
                     ).add_to(m)
-                if bounds:
-                    m.fit_bounds(bounds, padding=(30, 30))
-                st_folium(m, height=300, use_container_width=True,
+                st_folium(m, height=290, use_container_width=True,
                           returned_objects=[])
 
             with mc2:
-                # Daftar status kualitas udara per wilayah (warna sesuai kategori)
-                list_html = "<div style='padding-top:2px;'>"
-                for _, row in data["wilayah"].iterrows():
-                    kat_w = row["kategori"]
-                    warna = KATEGORI_INFO.get(
-                        kat_w, KATEGORI_INFO["Sedang"]
-                    )["warna"]
-                    list_html += (
-                        "<div style='font-size:14px; color:#334155; "
-                        "margin-bottom:10px;'>"
-                        f"{row['wilayah']}: "
-                        f"<strong style='color:{warna};'>{kat_w}</strong></div>"
-                    )
-                list_html += "</div>"
-                st.markdown(list_html, unsafe_allow_html=True)
-
-                st.markdown("<div style='margin-top:8px;'></div>",
-                            unsafe_allow_html=True)
-                # Legend kategori (Keterangan:)
+                # FIX #1 + #2 — legend reliable via render_legend_safe
                 render_legend_safe(KATEGORI_INFO)
 
-            # Tombol "Lihat Selengkapnya" di bawah peta (outline pill, kiri)
-            st.markdown("<div style='margin-top:10px;'></div>",
-                        unsafe_allow_html=True)
-            bcol, _bsp = st.columns([1.3, 1.2])
-            with bcol:
+                # FIX — tombol "Lihat Selengkapnya" sekarang di KOLOM LEGEND
+                # (kanan-bawah, sejajar di samping peta) sesuai mockup,
+                # bukan di baris terpisah di bawah peta + legend.
+                # Style: outline pill (bukan solid primary) — match mockup.
+                st.markdown(
+                    "<div style='margin-top:19px;'></div>",
+                    unsafe_allow_html=True,
+                )
                 if st.button("Lihat Selengkapnya  →",
                              key="btn_selengkapnya",
                              use_container_width=True):
@@ -2280,6 +2136,36 @@ def page_dashboard(data):
         unsafe_allow_html=True,
     )
 
+    # ──────────────── REKOMENDASI AKTIVITAS ────────────────
+    st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
+    with st.container(border=True):               # ← FIX #3
+        st.markdown(
+            "<div class='card-title'>Rekomendasi Aktivitas</div>",
+            unsafe_allow_html=True,
+        )
+        rekomendasi = [
+            ("🏃‍♀️", "Olahraga Luar Ruangan",
+             "Aktivitas luar ruangan aman dilakukan."),
+            ("😷",   "Gunakan Masker",
+             "Gunakan masker jika Anda sensitif terhadap polusi."),
+            ("👵",   "Kelompok Sensitif",
+             "Jaga kesehatan dan hindari area dengan polusi tinggi."),
+            ("🌳",   "Buka Jendela",
+             "Sirkulasi udara di dalam ruangan masih aman."),
+        ]
+        rc = st.columns(4, gap="medium")
+        for col, (icon, judul, desc) in zip(rc, rekomendasi):
+            with col:
+                st.markdown(
+                    "<div class='rekom-card'>"
+                    f"<div class='rekom-icon'>{icon}</div>"
+                    "<div>"
+                    f"<div class='rekom-title'>{judul}</div>"
+                    f"<div class='rekom-desc'>{desc}</div>"
+                    "</div></div>",
+                    unsafe_allow_html=True,
+                )
+
 
 
 
@@ -2351,29 +2237,25 @@ def page_detail_wilayah(data):
             kat = row["kategori"]
             info = KATEGORI_INFO[kat]
 
-            # Kualitas udara + Rekomendasi Aktivitas dalam SATU kartu (sesuai Figma):
-            # kiri = hero ISPU + polutan dominan + grid polutan; kanan = kotak
-            # Rekomendasi Aktivitas berupa gambar PNG dari assets sesuai kategori.
-            with st.container(border=True):
-                st.markdown(
-                    f"<div class='card-title'>Kualitas Udara {wilayah}</div>",
-                    unsafe_allow_html=True,
-                )
+            # Kualitas udara + Rekomendasi
+            c1, c2 = st.columns([1.1, 1], gap="medium")
 
-                left_col, right_col = st.columns([1, 1], gap="large")
-
-                # ── Kiri: hero + polutan dominan + grid polutan ──
-                with left_col:
+            # ---- Card kualitas udara (FIX #3: st.container(border=True))
+            with c1:
+                with st.container(border=True):
+                    st.markdown(
+                        f"<div class='card-title'>Kualitas Udara {wilayah}</div>",
+                        unsafe_allow_html=True,
+                    )
                     st.markdown(
                         f"""
-                        <div style="display:flex; align-items:center; gap:20px;
-                                    margin-top:4px; flex-wrap:wrap;">
-                            <div style="flex-shrink:0;">
+                        <div class='ispu-hero'>
+                            <div>
                                 <div class='ispu-number' style='color:{info["warna"]};'>{row["ispu"]}</div>
-                                <div class='ispu-label' style='text-align:center;'>ISPU</div>
+                                <div class='ispu-label'>ISPU</div>
                             </div>
-                            <div class='ispu-emoji' style='margin-bottom:0;'>{ispu_emoji_svg(kat, size=56)}</div>
-                            <div style="flex:1; min-width:160px;">
+                            <div>
+                                <div class='ispu-emoji'>{info["emoji"]}</div>
                                 <div class='ispu-status' style='color:{info["warna"]};'>Udara {kat}</div>
                                 <div class='ispu-desc'>{info["deskripsi"]}</div>
                             </div>
@@ -2382,20 +2264,20 @@ def page_detail_wilayah(data):
                         unsafe_allow_html=True,
                     )
 
-                    pdc1, pdc2 = st.columns([1, 1])
+                    pdc1, pdc2 = st.columns([2, 1])
                     with pdc1:
                         st.markdown(
                             f"""
-                            <div style='display:flex; align-items:center; gap:8px;
-                                        padding-top:16px; font-size:14px; color:#0F172A;'>
-                                <span style='color:#16A34A; font-size:16px;'>🌿</span>
-                                <span><strong>Polutan dominan:</strong> PM2.5 ({row["pm25"]} µg/m³)</span>
+                            <div class='polutan-dominan-row' style='border-top:1px solid #F1F5F9; padding-top:16px; margin-top:19px;'>
+                                <div class='polutan-dominan-text'>
+                                    🌿 <strong>Polutan dominan:</strong> PM2.5 ({row["pm25"]} µg/m³)
+                                </div>
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
                     with pdc2:
-                        st.markdown("<div style='padding-top:10px;'></div>", unsafe_allow_html=True)
+                        st.markdown("<div style='padding-top:19px;'></div>", unsafe_allow_html=True)
                         if st.button("ⓘ Lihat penjelasan polutan", key=f"btn_info_{wilayah}", use_container_width=True):
                             render_popup_polutan()
 
@@ -2413,29 +2295,32 @@ def page_detail_wilayah(data):
                         unsafe_allow_html=True,
                     )
 
-                # ── Kanan: Rekomendasi Aktivitas (PNG dari assets sesuai kategori) ──
-                with right_col:
-                    rekom_b64 = rekom_img_b64(REKOM_IMG.get(kat, ""))
-                    if rekom_b64:
-                        st.markdown(
-                            f"<img src='data:image/png;base64,{rekom_b64}' alt='Rekomendasi Aktivitas' "
-                            f"style='width:100%; height:auto; display:block; margin-top:8px;'/>",
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        # Fallback teks bila gambar tidak ditemukan
-                        st.markdown(
-                            f"""
-                            <div style="background:{info['warna_bg']}; border:1.5px solid {info['warna']};
-                                        border-radius:16px; padding:18px 20px; margin-top:8px;">
-                                <div style="font-size:16px; font-weight:700; color:{info['warna']}; margin-bottom:8px;">
-                                    Rekomendasi Aktivitas
+            # ---- Rekomendasi aktivitas (4 item dalam 2x2 grid)
+            with c2:
+                with st.container(border=True):
+                    st.markdown("<div class='card-title'>Rekomendasi Aktivitas</div>", unsafe_allow_html=True)
+
+                    rekomendasi = [
+                        ("🏃‍♀️", "Olahraga Luar Ruangan", "Aktivitas luar ruangan aman dilakukan."),
+                        ("😷",   "Gunakan Masker",         "Gunakan masker jika Anda sensitif terhadap polusi."),
+                        ("👵",   "Kelompok Sensitif",      "Jaga kesehatan dan hindari area dengan polusi tinggi."),
+                        ("🌳",   "Buka Jendela",           "Sirkulasi udara di dalam ruangan masih aman."),
+                    ]
+                    gc1, gc2 = st.columns(2, gap="small")
+                    for idx, (icon, judul, desc) in enumerate(rekomendasi):
+                        with (gc1 if idx % 2 == 0 else gc2):
+                            st.markdown(
+                                f"""
+                                <div class='rekom-card' style='margin-bottom:10px;'>
+                                    <div class='rekom-icon'>{icon}</div>
+                                    <div>
+                                        <div class='rekom-title'>{judul}</div>
+                                        <div class='rekom-desc'>{desc}</div>
+                                    </div>
                                 </div>
-                                <div style="font-size:13.5px; color:#1E293B; line-height:1.55;">{info['rekomendasi']}</div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
-                        )
+                                """,
+                                unsafe_allow_html=True,
+                            )
 
             st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
