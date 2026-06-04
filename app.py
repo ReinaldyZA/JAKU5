@@ -190,11 +190,42 @@ def inject_css():
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
         border-right: 1px solid #E2E8F0;
-        padding-top: 16px;
+        padding-top: 0 !important;
         min-width: 300px;
     }
-    [data-testid="stSidebar"] > div:first-child {
-        padding-top: 16px;
+    /* Header bawaan sidebar (area tombol collapse) menyisakan ruang kosong
+       di atas — nol-kan supaya logo benar-benar mentok ke atas. */
+    [data-testid="stSidebarHeader"],
+    div[data-testid="stSidebarHeader"] {
+        padding: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+    }
+    [data-testid="stSidebarUserContent"],
+    [data-testid="stSidebarContent"] {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    /* Streamlit membungkus isi sidebar dalam beberapa div bersarang —
+       semua layer harus di-reset ke 0 supaya logo benar-benar mentok atas */
+    [data-testid="stSidebar"] > div:first-child,
+    [data-testid="stSidebar"] > div > div:first-child,
+    [data-testid="stSidebar"] > div > div > div:first-child,
+    section[data-testid="stSidebar"] > div,
+    section[data-testid="stSidebar"] > div > div {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+        padding-top: 0 !important;
+    }
+    [data-testid="stSidebar"] .element-container {
+        margin-bottom: 0 !important;
+    }
+    [data-testid="stSidebar"] .stMarkdown {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
     }
 
     .sidebar-logo {
@@ -1725,7 +1756,7 @@ def render_sidebar():
                 raw_svg, count=1,
             )
             st.markdown(
-                f'<div style="padding:20px 16px 0 16px; text-align:center;">{raw_svg}</div>'
+                f'<div style="padding:8px 16px 0 16px; text-align:center;">{raw_svg}</div>'
                 '<div style="height:18px;"></div>',
                 unsafe_allow_html=True,
             )
