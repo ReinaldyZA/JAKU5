@@ -2862,21 +2862,6 @@ def page_edukasi(data):
         unsafe_allow_html=True,
     )
 
-    # Hover halus untuk mini-card tips (scoped, dirender sekali)
-    st.markdown(
-        """
-        <style>
-        .edu-tip { transition: transform .2s ease, box-shadow .2s ease; }
-        .edu-tip:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 24px rgba(15,23,42,.10);
-            background: #FFFFFF;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
     # ============================================================
     # Section 1: Mengenal ISPU + 5 kategori
     # FIX: pakai st.container(border=True) (FIX #3) agar judul + kartu
@@ -2918,29 +2903,14 @@ def page_edukasi(data):
                 unsafe_allow_html=True,
             )
 
-            dampak = [
-                ("🫁", "Sistem Pernapasan", "Polusi udara dapat menyebabkan iritasi, batuk, sesak napas, dan memperparah asma."),
-                ("❤️", "Sistem Kardiovaskular", "Paparan jangka panjang meningkatkan risiko penyakit jantung dan tekanan darah tinggi."),
-                ("👶", "Anak-anak", "Anak lebih rentan terhadap infeksi pernapasan dan gangguan perkembangan paru-paru."),
-                ("🧓", "Lansia", "Risiko penyakit kronis meningkat, terutama jika memiliki riwayat penyakit."),
-            ]
-            dr1, dr2 = st.columns(2, gap="medium")
-            for idx, (icon, judul, desc) in enumerate(dampak):
-                with (dr1 if idx % 2 == 0 else dr2):
-                    st.markdown(
-                        f"""
-                        <div style='display:flex; gap:14px; align-items:flex-start;
-                                    background:#F8FAFC; border:1px solid #EEF2F7; border-radius:14px;
-                                    padding:14px 16px; margin-bottom:14px; min-height:108px;'>
-                            <div style='font-size:26px; flex-shrink:0; line-height:1;'>{icon}</div>
-                            <div>
-                                <div style='font-size:15px; font-weight:700; color:#0F172A; margin-bottom:4px;'>{judul}</div>
-                                <div style='font-size:13px; color:#475569; line-height:1.5;'>{desc}</div>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+            # 4 kartu dampak = SVG desain Figma (assets/dampak_kualitas.svg).
+            dampak_svg_b64 = rekom_img_b64("dampak_kualitas.svg")
+            if dampak_svg_b64:
+                st.markdown(
+                    f"<img src='data:image/svg+xml;base64,{dampak_svg_b64}' "
+                    "alt='Dampak Kualitas Udara' style='width:100%; height:auto; display:block;'/>",
+                    unsafe_allow_html=True,
+                )
 
     # --- Sumber Polusi (donut chart) ---
     with dc2:
@@ -3007,29 +2977,14 @@ def page_edukasi(data):
             unsafe_allow_html=True,
         )
 
-        tips = [
-            ("😷",  "Gunakan Masker",       "Gunakan masker berstandar untuk mengurangi paparan polusi udara."),
-            ("🚫",  "Batasi Aktivitas Luar","Kurangi aktivitas fisik berat di luar ruangan, terutama saat sore hingga malam hari."),
-            ("🌬️", "Ventilasi yang Baik",  "Tutup jendela saat polusi tinggi dan pastikan ventilasi rumah tetap berfungsi baik."),
-            ("💧",  "Perbanyak Minum Air",  "Cairan tubuh yang cukup membantu mengurangi efek polutan pada tubuh."),
-            ("🌀",  "Gunakan Air Purifier", "Jika memungkinkan, gunakan alat penyaring udara di dalam ruangan untuk udara lebih bersih."),
-        ]
-        tc = st.columns(5, gap="medium")
-        for col, (icon, judul, desc) in zip(tc, tips):
-            with col:
-                st.markdown(
-                    f"""
-                    <div class='edu-tip' style='background:#F8FAFC; border:1px solid #EEF2F7; border-radius:16px;
-                                padding:18px; height:100%;'>
-                        <div style='width:42px; height:42px; border-radius:12px; background:#EAF1FF;
-                                    display:flex; align-items:center; justify-content:center;
-                                    font-size:21px; margin-bottom:11px;'>{icon}</div>
-                        <div style='font-size:15px; font-weight:700; color:#0F172A; margin-bottom:6px;'>{judul}</div>
-                        <div style='font-size:12px; color:#64748B; line-height:1.5;'>{desc}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+        # 5 kartu tips = SVG desain Figma (assets/jaga_kesehatan.svg).
+        tips_svg_b64 = rekom_img_b64("jaga_kesehatan.svg")
+        if tips_svg_b64:
+            st.markdown(
+                f"<img src='data:image/svg+xml;base64,{tips_svg_b64}' "
+                "alt='Tips Menjaga Kesehatan' style='width:100%; height:auto; display:block;'/>",
+                unsafe_allow_html=True,
+            )
 
 
 # ================================================================
