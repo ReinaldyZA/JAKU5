@@ -2025,7 +2025,7 @@ def page_dashboard(data):
                     """,
                     unsafe_allow_html=True,
                 )
-    # ─── KANAN: Peta wilayah + legend + tombol ───
+    # ─── KANAN: Peta wilayah + daftar status + legend + tombol ───
     with col_right:
         with st.container(border=True):           # ← FIX #3
             st.markdown(
@@ -2033,68 +2033,98 @@ def page_dashboard(data):
                 unsafe_allow_html=True,
             )
 
-            # Peta + legend side-by-side
-            mc1, mc2 = st.columns([1.9, 1], gap="small")
+            # Peta (kiri) + daftar status wilayah & legend (kanan)
+            mc1, mc2 = st.columns([1.4, 1], gap="medium")
             with mc1:
-                # FIX — zoom 11 → 12 dan max_bounds untuk benar-benar kunci ke DKI.
-                # Sebelumnya fit_bounds tidak cukup ketat → Tangerang & Bekasi
-                # masih besar di viewport.
+                # Peta dengan tile berwarna (CartoDB Voyager) seperti desain.
                 m = folium.Map(
-                    location=[-6.2088, 106.8456],
-                    zoom_start=12,
-                    tiles="CartoDB positron",
+                    location=[-6.17, 106.83],
+                    zoom_start=11,
+                    tiles=None,
                     zoom_control=False,
                     scrollWheelZoom=False,
                     dragging=True,
-                    min_zoom=11,
+                    min_zoom=10,
                     max_zoom=14,
                 )
-                # Hard-lock viewport ke DKI Jakarta
-                m.options['maxBounds'] = [[-6.40, 106.65], [-6.05, 107.05]]
-                m.options['maxBoundsViscosity'] = 1.0
-                m.fit_bounds([[-6.30, 106.78], [-6.10, 106.95]])
+                folium.TileLayer(
+                    tiles="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+                    attr="&copy; OpenStreetMap contributors &copy; CARTO",
+                    name="Voyager",
+                    control=False,
+                ).add_to(m)
+
+                # Koordinat tampilan: Kep. Seribu (lokasi asli jauh di utara,
+                # ~-5.75) digeser ke area teluk utara Jakarta agar lingkarannya
+                # tetap tampil dalam peta DKI seperti desain. Data asli tak diubah.
+                display_coords = {"Kep. Seribu": (-6.03, 106.80)}
+
+                bounds = []
                 for _, row in data["wilayah"].iterrows():
+                    lat, lon = display_coords.get(
+                        row["wilayah"], (row["lat"], row["lon"])
+                    )
                     kat_w = row["kategori"]
                     warna = KATEGORI_INFO.get(
                         kat_w, KATEGORI_INFO["Sedang"]
                     )["warna"]
+                    bounds.append([lat, lon])
+                    # Lingkaran berwarna kategori
                     folium.CircleMarker(
-                        location=[row["lat"], row["lon"]],
-                        radius=24,
+                        location=[lat, lon],
+                        radius=23,
                         color="white",
                         weight=3,
                         fill=True,
                         fillColor=warna,
                         fillOpacity=0.95,
-                        tooltip=f"{row['wilayah']}: {row['ispu']}",
+                        tooltip=f"{row['wilayah']}: {row['ispu']} ({kat_w})",
                     ).add_to(m)
+                    # Label skor ISPU di tengah lingkaran
                     folium.map.Marker(
-                        [row["lat"], row["lon"]],
+                        [lat, lon],
                         icon=folium.DivIcon(
-                            icon_size=(40, 40),
-                            icon_anchor=(20, 20),
+                            icon_size=(46, 46),
+                            icon_anchor=(23, 23),
                             html=(
-                                "<div style='font-size:12px; font-weight:800; "
+                                "<div style='font-size:13px; font-weight:800; "
                                 "color:white; text-align:center; "
-                                f"line-height:40px;'>{row['ispu']}</div>"
+                                f"line-height:46px;'>{row['ispu']}</div>"
                             ),
                         ),
                     ).add_to(m)
-                st_folium(m, height=290, use_container_width=True,
+                if bounds:
+                    m.fit_bounds(bounds, padding=(30, 30))
+                st_folium(m, height=300, use_container_width=True,
                           returned_objects=[])
 
             with mc2:
-                # FIX #1 + #2 — legend reliable via render_legend_safe
+                # Daftar status kualitas udara per wilayah (warna sesuai kategori)
+                list_html = "<div style='padding-top:2px;'>"
+                for _, row in data["wilayah"].iterrows():
+                    kat_w = row["kategori"]
+                    warna = KATEGORI_INFO.get(
+                        kat_w, KATEGORI_INFO["Sedang"]
+                    )["warna"]
+                    list_html += (
+                        "<div style='font-size:14px; color:#334155; "
+                        "margin-bottom:10px;'>"
+                        f"{row['wilayah']}: "
+                        f"<strong style='color:{warna};'>{kat_w}</strong></div>"
+                    )
+                list_html += "</div>"
+                st.markdown(list_html, unsafe_allow_html=True)
+
+                st.markdown("<div style='margin-top:8px;'></div>",
+                            unsafe_allow_html=True)
+                # Legend kategori (Keterangan:)
                 render_legend_safe(KATEGORI_INFO)
 
-                # FIX — tombol "Lihat Selengkapnya" sekarang di KOLOM LEGEND
-                # (kanan-bawah, sejajar di samping peta) sesuai mockup,
-                # bukan di baris terpisah di bawah peta + legend.
-                # Style: outline pill (bukan solid primary) — match mockup.
-                st.markdown(
-                    "<div style='margin-top:19px;'></div>",
-                    unsafe_allow_html=True,
-                )
+            # Tombol "Lihat Selengkapnya" di bawah peta (outline pill, kiri)
+            st.markdown("<div style='margin-top:10px;'></div>",
+                        unsafe_allow_html=True)
+            bcol, _bsp = st.columns([1.3, 1.2])
+            with bcol:
                 if st.button("Lihat Selengkapnya  →",
                              key="btn_selengkapnya",
                              use_container_width=True):
