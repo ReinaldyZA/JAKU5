@@ -1921,40 +1921,50 @@ def page_dashboard(data):
                 )
 
             with hero_illust:
-                # Ilustrasi Jakarta + caption — center di kolomnya sendiri,
-                # tidak lagi tergantung margin-left:auto yang plin-plan.
-                st.markdown(
-                    "<div style='text-align:center; padding-top:6px;'>"
-                    f"{jakarta_skyline_svg(width=180)}"
-                    "<div style='font-size:13px; color:#64748B; "
-                    "font-weight:500; margin-top:3px;'>DKI Jakarta</div>"
-                    "</div>",
-                    unsafe_allow_html=True,
-                )
+                # Ilustrasi Jakarta dari PNG (assets/ilustrasi_jakarta.png).
+                # Fallback ke SVG bawaan bila file tidak ditemukan.
+                ilust_b64 = rekom_img_b64("ilustrasi_jakarta.png")
+                if ilust_b64:
+                    st.markdown(
+                        "<div style='text-align:center; padding-top:2px;'>"
+                        "<div style='background:#FFFFFF; border:1px solid #EEF2F7; "
+                        "border-radius:14px; padding:8px; display:inline-block; "
+                        "box-shadow:0 1px 3px rgba(15,23,42,0.04);'>"
+                        f"<img src='data:image/png;base64,{ilust_b64}' "
+                        "style='width:150px; height:auto; border-radius:8px; display:block;'/>"
+                        "</div>"
+                        "<div style='font-size:13px; color:#64748B; font-weight:500; "
+                        "margin-top:5px;'>DKI Jakarta</div>"
+                        "</div>",
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.markdown(
+                        "<div style='text-align:center; padding-top:6px;'>"
+                        f"{jakarta_skyline_svg(width=180)}"
+                        "<div style='font-size:13px; color:#64748B; "
+                        "font-weight:500; margin-top:3px;'>DKI Jakarta</div>"
+                        "</div>",
+                        unsafe_allow_html=True,
+                    )
 
-            # ─── Polutan dominan strip + tombol info polutan ───
-            # FIX — sebelumnya tombol "floating" di tengah card karena
-            # padding-top fix tidak match dengan baseline polutan strip.
-            # Sekarang: garis separator full-width via markdown, lalu
-            # strip pakai 2-column dengan vertical_alignment="center"
-            # supaya tombol & teks polutan benar-benar sejajar baseline.
+            # ─── Polutan dominan (kiri) + tombol "Lihat penjelasan polutan"
+            #     (kanan mentok, sejajar satu baris) ───
             st.markdown(
-                "<div style='border-top:1px solid #F1F5F9; "
-                "margin-top:18px;'></div>",
+                "<div style='margin-top:12px;'></div>",
                 unsafe_allow_html=True,
             )
 
             try:
-                pdc1, pdc2 = st.columns([1.6, 1], vertical_alignment="center")
+                pdc1, pdc2 = st.columns([2, 1.15], vertical_alignment="center")
             except TypeError:
                 # Fallback untuk Streamlit < 1.36 yang tidak punya vertical_alignment
-                pdc1, pdc2 = st.columns([1.6, 1])
+                pdc1, pdc2 = st.columns([2, 1.15])
 
             with pdc1:
                 st.markdown(
                     "<div style='display:flex; align-items:center; "
-                    "gap:8px; padding-top:14px; font-size:15px; "
-                    "color:#0F172A;'>"
+                    "gap:8px; font-size:15px; color:#0F172A;'>"
                     "<span style='color:#16A34A; font-size:17px;'>🌿</span>"
                     "<span><strong>Polutan dominan:</strong>&nbsp; "
                     "PM2.5 (24 µg/m³)</span>"
@@ -1962,10 +1972,10 @@ def page_dashboard(data):
                     unsafe_allow_html=True,
                 )
             with pdc2:
-                # Tombol natural-width; CSS di awal file akan right-align
-                # via :has selector untuk kolom yang memuat tombol ini.
+                # use_container_width → tombol mengisi kolom kanan → posisinya
+                # mentok ke kanan kartu, sejajar dengan teks polutan dominan.
                 if st.button("ⓘ  Lihat penjelasan polutan",
-                             key="btn_info_dashboard"):
+                             key="btn_info_dashboard", use_container_width=True):
                     render_popup_polutan()
 
             # 6 polutan compact — SATU markdown call
@@ -2178,36 +2188,6 @@ def page_dashboard(data):
         "</div></div>",
         unsafe_allow_html=True,
     )
-
-    # ──────────────── REKOMENDASI AKTIVITAS ────────────────
-    st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
-    with st.container(border=True):               # ← FIX #3
-        st.markdown(
-            "<div class='card-title'>Rekomendasi Aktivitas</div>",
-            unsafe_allow_html=True,
-        )
-        rekomendasi = [
-            ("🏃‍♀️", "Olahraga Luar Ruangan",
-             "Aktivitas luar ruangan aman dilakukan."),
-            ("😷",   "Gunakan Masker",
-             "Gunakan masker jika Anda sensitif terhadap polusi."),
-            ("👵",   "Kelompok Sensitif",
-             "Jaga kesehatan dan hindari area dengan polusi tinggi."),
-            ("🌳",   "Buka Jendela",
-             "Sirkulasi udara di dalam ruangan masih aman."),
-        ]
-        rc = st.columns(4, gap="medium")
-        for col, (icon, judul, desc) in zip(rc, rekomendasi):
-            with col:
-                st.markdown(
-                    "<div class='rekom-card'>"
-                    f"<div class='rekom-icon'>{icon}</div>"
-                    "<div>"
-                    f"<div class='rekom-title'>{judul}</div>"
-                    f"<div class='rekom-desc'>{desc}</div>"
-                    "</div></div>",
-                    unsafe_allow_html=True,
-                )
 
 
 
