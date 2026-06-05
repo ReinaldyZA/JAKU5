@@ -1042,19 +1042,30 @@ def inject_css():
        outline biru saja (latar putih, teks & border biru), TANPA efek hover.
        Flag " i" = case-insensitive, agar cocok di semua halaman termasuk
        label "Penjelasan" (P kapital) di halaman Simulasi Prediksi ISPU. */
+    /* Tombol "Lihat penjelasan polutan" di Dashboard, Detail Wilayah, &
+       Simulasi (key diawali "btn_info_") + tombol "Lihat Selengkapnya".
+       Target utama lewat class st-key-* (paling andal di Streamlit modern),
+       dengan fallback aria-label. Outline biru saja — TANPA hover/focus/active. */
+    [class*="st-key-btn_info"] button,
+    [class*="st-key-btn_info"] button:hover,
+    [class*="st-key-btn_info"] button:focus,
+    [class*="st-key-btn_info"] button:focus-visible,
+    [class*="st-key-btn_info"] button:active,
     div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button,
-    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button,
     div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button:hover,
-    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button:hover,
     div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button:focus,
-    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button:focus,
     div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button:focus-visible,
     div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button:active,
+    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button,
+    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button:hover,
+    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button:focus,
     div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button:active {
         background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
         color: #2563EB !important;
         border: 1px solid #2563EB !important;
-        font-weight: 600;
+        border-color: #2563EB !important;
+        font-weight: 600 !important;
         transform: none !important;
         box-shadow: none !important;
         transition: none !important;
