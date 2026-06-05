@@ -1233,6 +1233,29 @@ def rekom_img_b64(filename: str) -> str:
     return base64.b64encode(p.read_bytes()).decode()
 
 
+def svg_inline(filename: str) -> str:
+    """Baca SVG dari assets/ dan kembalikan markup inline (skala 100% lebar).
+    Lebih andal daripada <img data:base64> untuk SVG kompleks."""
+    if not filename:
+        return ""
+    p = ASSETS_DIR / filename
+    if not p.exists():
+        for f in ASSETS_DIR.iterdir():
+            if f.name.lower() == filename.lower():
+                p = f
+                break
+        else:
+            return ""
+    svg = p.read_text(encoding="utf-8")
+    # Sisipkan style width:100% pada tag <svg ...> pertama (override width/height tetap)
+    svg = re.sub(
+        r'<svg\b',
+        '<svg style="width:100%;height:auto;display:block"',
+        svg, count=1,
+    )
+    return svg
+
+
 def kategori_dari_ispu(ispu):
     """Konversi nilai ISPU ke kategori berdasarkan PERMEN LHK 14/2020."""
     if ispu <= 50:    return "Baik"
@@ -2877,13 +2900,9 @@ def page_edukasi(data):
         )
 
         # 5 kartu kategori ISPU = SVG desain Figma (assets/ispu_kategori.svg).
-        kat_svg_b64 = rekom_img_b64("ispu_kategori.svg")
-        if kat_svg_b64:
-            st.markdown(
-                f"<img src='data:image/svg+xml;base64,{kat_svg_b64}' "
-                "alt='Kategori ISPU' style='width:100%; height:auto; display:block;'/>",
-                unsafe_allow_html=True,
-            )
+        kat_svg = svg_inline("ispu_kategori.svg")
+        if kat_svg:
+            st.markdown(kat_svg, unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
@@ -2904,13 +2923,9 @@ def page_edukasi(data):
             )
 
             # 4 kartu dampak = SVG desain Figma (assets/dampak_kualitas.svg).
-            dampak_svg_b64 = rekom_img_b64("dampak_kualitas.svg")
-            if dampak_svg_b64:
-                st.markdown(
-                    f"<img src='data:image/svg+xml;base64,{dampak_svg_b64}' "
-                    "alt='Dampak Kualitas Udara' style='width:100%; height:auto; display:block;'/>",
-                    unsafe_allow_html=True,
-                )
+            dampak_svg = svg_inline("dampak_kualitas.svg")
+            if dampak_svg:
+                st.markdown(dampak_svg, unsafe_allow_html=True)
 
     # --- Sumber Polusi (donut chart) ---
     with dc2:
@@ -2978,13 +2993,9 @@ def page_edukasi(data):
         )
 
         # 5 kartu tips = SVG desain Figma (assets/jaga_kesehatan.svg).
-        tips_svg_b64 = rekom_img_b64("jaga_kesehatan.svg")
-        if tips_svg_b64:
-            st.markdown(
-                f"<img src='data:image/svg+xml;base64,{tips_svg_b64}' "
-                "alt='Tips Menjaga Kesehatan' style='width:100%; height:auto; display:block;'/>",
-                unsafe_allow_html=True,
-            )
+        tips_svg = svg_inline("jaga_kesehatan.svg")
+        if tips_svg:
+            st.markdown(tips_svg, unsafe_allow_html=True)
 
 
 # ================================================================
