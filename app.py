@@ -2360,11 +2360,22 @@ def render_empty_state_wilayah(wilayah):
 
 
 def page_detail_wilayah(data):
-    st.markdown(
-        "<div class='page-title'>Detail Wilayah</div>"
-        "<div class='page-subtitle'>Pilih wilayah untuk melihat informasi kualitas udara lebih detail.</div>",
-        unsafe_allow_html=True,
-    )
+    head1, head2 = st.columns([3, 1.1])
+    with head1:
+        st.markdown(
+            "<div class='page-title'>Detail Wilayah</div>"
+            "<div class='page-subtitle'>Pilih wilayah untuk melihat informasi kualitas udara lebih detail.</div>",
+            unsafe_allow_html=True,
+        )
+    with head2:
+        st.markdown(
+            "<div style='display:flex; justify-content:flex-end; padding-top:6px;'>"
+            "<div class='updated-card'>"
+            "<div class='updated-card-label'>📅 Data terakhir diperbarui</div>"
+            "<div class='updated-card-value'>15 Juni 2024, 10:00 WIB</div>"
+            "</div></div>",
+            unsafe_allow_html=True,
+        )
 
     # Tabs wilayah
     wilayah_list = data["wilayah"]["wilayah"].tolist()
