@@ -1838,37 +1838,65 @@ def render_sidebar():
 
 
         # Menu utama
-        selected = option_menu(
-            menu_title=None,
-            options=[
-                "Dashboard",
-                "Detail Wilayah",
-                "Simulasi Prediksi ISPU",
-                "Edukasi & Insight",
-            ],
-            icons=["grid", "geo-alt", "bar-chart", "book"],
-            default_index=0,
-            styles={
-                "container": {
-                    "padding": "4px 8px",
-                    "background-color": "#FFFFFF",
-                },
-                "icon": {"font-size": "17px"},
-                "nav-link": {
-                    "font-size": "15px",
-                    "font-weight": "500",
-                    "color": "#475569",
-                    "padding": "11px 16px",
-                    "margin": "3px 0",
-                    "border-radius": "10px",
-                    "--hover-color": "#F1F5F9",
-                },
-                "nav-link-selected": {
-                    "background-color": "#DBEAFE",
-                    "color": "#2563EB",
-                    "font-weight": "600",
-                },
-            },
+        # ── Navigasi custom (st.button) supaya bisa pakai ikon SVG sendiri.
+        #    option_menu hanya mendukung ikon Bootstrap & dirender di iframe,
+        #    jadi tak bisa memakai SVG kustom. Ikon dipasang via CSS mask agar
+        #    warnanya mengikuti status (abu-abu normal, biru saat aktif).
+        NAV_ITEMS = [
+            ("Dashboard", "label_dashboard.svg", "navdashboard"),
+            ("Detail Wilayah", "detail_wilayah.svg", "navdetail"),
+            ("Simulasi Prediksi ISPU", "label_prediksi.svg", "navsimulasi"),
+            ("Edukasi & Insight", "label_edukasi.svg", "navedukasi"),
+        ]
+        if "nav_page" not in st.session_state:
+            st.session_state["nav_page"] = "Dashboard"
+
+        # CSS statis: gaya nav-link + ikon SVG per item (mask).
+        css = "<style>"
+        css += (
+            'section[data-testid="stSidebar"] [class*="st-key-nav"] button{'
+            'justify-content:flex-start !important;text-align:left;width:100%;'
+            'background:#FFFFFF !important;border:none !important;box-shadow:none !important;'
+            'color:#475569 !important;font-size:15px;font-weight:500;'
+            'padding:11px 16px;border-radius:10px !important;transition:none !important;}'
+            'section[data-testid="stSidebar"] [class*="st-key-nav"] button:hover{'
+            'background:#F1F5F9 !important;color:#475569 !important;}'
+            'section[data-testid="stSidebar"] [class*="st-key-nav"] button::before{'
+            'content:"";display:inline-block;width:18px;height:18px;margin-right:12px;'
+            'vertical-align:middle;flex-shrink:0;background-color:#4B5563;'
+            '-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;'
+            '-webkit-mask-position:center;mask-position:center;'
+            '-webkit-mask-size:contain;mask-size:contain;}'
+        )
+        for _label, _fname, _key in NAV_ITEMS:
+            _b64 = rekom_img_b64(_fname)
+            if _b64:
+                css += (
+                    f'section[data-testid="stSidebar"] .st-key-{_key} button::before{{'
+                    f'-webkit-mask-image:url("data:image/svg+xml;base64,{_b64}");'
+                    f'mask-image:url("data:image/svg+xml;base64,{_b64}");}}'
+                )
+        css += "</style>"
+        st.markdown(css, unsafe_allow_html=True)
+
+        # Tombol-tombol navigasi
+        for _label, _fname, _key in NAV_ITEMS:
+            if st.button(_label, key=_key, use_container_width=True):
+                st.session_state["nav_page"] = _label
+
+        selected = st.session_state["nav_page"]
+
+        # CSS state aktif (dirender SETELAH tombol → langsung sinkron dgn klik)
+        _active_key = {l: k for l, _f, k in NAV_ITEMS}[selected]
+        st.markdown(
+            "<style>"
+            f'section[data-testid="stSidebar"] .st-key-{_active_key} button,'
+            f'section[data-testid="stSidebar"] .st-key-{_active_key} button:hover{{'
+            "background:#DBEAFE !important;color:#2563EB !important;font-weight:600 !important;}"
+            f'section[data-testid="stSidebar"] .st-key-{_active_key} button::before{{'
+            "background-color:#2563EB !important;}"
+            "</style>",
+            unsafe_allow_html=True,
         )
 
         # Spacer untuk dorong footer ke bawah
@@ -3098,12 +3126,14 @@ def page_edukasi(data):
 def main():
     inject_css()
     data = load_data()
-    page = render_sidebar()
 
-    # Handle redirect dari tombol "Lihat Selengkapnya" di dashboard
+    # Handle redirect dari tombol "Lihat Selengkapnya" di dashboard.
+    # Set halaman SEBELUM sidebar dirender agar highlight nav ikut sinkron.
     if st.session_state.get("jump_to_detail"):
         st.session_state["jump_to_detail"] = False
-        page = "Detail Wilayah"
+        st.session_state["nav_page"] = "Detail Wilayah"
+
+    page = render_sidebar()
 
     if page == "Dashboard":
         page_dashboard(data)
