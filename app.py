@@ -969,17 +969,32 @@ def inject_css():
 
     /* ============ TABS WILAYAH ============ */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
+        gap: 10px;
         border-bottom: none;
+        flex-wrap: wrap;
     }
     .stTabs [data-baseweb="tab"] {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 8px;
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 999px;
-        padding: 8px 18px;
+        border-radius: 8px;
+        padding: 10px 20px;
         font-weight: 600;
         color: #64748B;
         font-size: 14px;
+    }
+    /* Ikon status (penunjuk) di kiri label tiap wilayah — sesuai desain Figma.
+       Gambar per-wilayah disuntik dinamis di page_detail_wilayah(). */
+    .stTabs [data-baseweb="tab"]::before {
+        content: "";
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
     }
     .stTabs [aria-selected="true"] {
         background-color: #DBEAFE !important;
@@ -2306,6 +2321,28 @@ def page_detail_wilayah(data):
 
     # Tabs wilayah
     wilayah_list = data["wilayah"]["wilayah"].tolist()
+
+    # Ikon penunjuk per-wilayah (SVG dari assets) → disuntik ke tiap pill tab
+    # berdasarkan urutannya (nth-of-type). Sesuai desain Figma.
+    ICON_WILAYAH = {
+        "Jakarta Pusat":   "pusat.svg",
+        "Jakarta Utara":   "utara.svg",
+        "Jakarta Barat":   "barat.svg",
+        "Jakarta Selatan": "selatan.svg",
+        "Jakarta Timur":   "timur.svg",
+        "Kep. Seribu":     "seribu.svg",
+    }
+    icon_css = "<style>"
+    for i, w in enumerate(wilayah_list, start=1):
+        b64 = rekom_img_b64(ICON_WILAYAH.get(w, ""))
+        if b64:
+            icon_css += (
+                f'.stTabs [data-baseweb="tab"]:nth-of-type({i})::before{{'
+                f'background-image:url("data:image/svg+xml;base64,{b64}");}}'
+            )
+    icon_css += "</style>"
+    st.markdown(icon_css, unsafe_allow_html=True)
+
     tabs = st.tabs(wilayah_list)
 
     for tab, wilayah in zip(tabs, wilayah_list):
