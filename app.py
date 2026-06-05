@@ -1038,21 +1038,26 @@ def inject_css():
     div[data-testid="stButton"] > button {
         /* default semua button non-primary jadi outline pill modern */
     }
-    /* Khusus untuk tombol info polutan & lihat selengkapnya — pakai key match */
-    div[data-testid="stButton"]:has(button[aria-label*="penjelasan"]) > button,
-    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya"]) > button {
-        background: #FFFFFF;
-        color: #2563EB;
-        border: 1px solid #2563EB;
+    /* Khusus tombol "Lihat penjelasan polutan" & "Lihat Selengkapnya":
+       outline biru saja (latar putih, teks & border biru), TANPA efek hover.
+       Flag " i" = case-insensitive, agar cocok di semua halaman termasuk
+       label "Penjelasan" (P kapital) di halaman Simulasi Prediksi ISPU. */
+    div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button,
+    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button,
+    div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button:hover,
+    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button:hover,
+    div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button:focus,
+    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button:focus,
+    div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button:focus-visible,
+    div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button:active,
+    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya" i]) > button:active {
+        background: #FFFFFF !important;
+        color: #2563EB !important;
+        border: 1px solid #2563EB !important;
         font-weight: 600;
-    }
-    div[data-testid="stButton"]:has(button[aria-label*="penjelasan"]) > button:hover,
-    div[data-testid="stButton"]:has(button[aria-label*="Selengkapnya"]) > button:hover {
-        background: #EFF6FF;
-        color: #1D4ED8;
-        border-color: #1D4ED8;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        transform: none !important;
+        box-shadow: none !important;
+        transition: none !important;
     }
 
     /* FIX TAMBAHAN — right-align tombol "Lihat penjelasan polutan"
