@@ -467,7 +467,7 @@ def inject_css():
     .pred-pill {
         display: inline-block;
         padding: 6px 14px;
-        border-radius: 999px;
+        border-radius: 8px;
         font-size: 14px;
         font-weight: 700;
         color: #FFFFFF;
