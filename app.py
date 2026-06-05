@@ -2991,14 +2991,7 @@ def page_edukasi(data):
     # --- Dampak Kesehatan ---
     with dc1:
         with st.container(border=True):
-            st.markdown(
-                "<div class='card-title'>Dampak Kualitas Udara terhadap Kesehatan</div>"
-                "<div style='font-size:14px; color:#475569; margin-bottom:18px; line-height:1.5;'>"
-                "Pengaruh polusi udara terhadap berbagai kelompok dan sistem tubuh."
-                "</div>",
-                unsafe_allow_html=True,
-            )
-
+            # Judul & subjudul sudah termuat di dalam SVG, jadi tidak perlu header terpisah.
             # 4 kartu dampak = SVG desain Figma (assets/dampak_kualitas.svg).
             dampak_svg = svg_inline("dampak_kualitas.svg")
             if dampak_svg:
@@ -3061,14 +3054,7 @@ def page_edukasi(data):
     # Section 3: Tips Kesehatan
     # ============================================================
     with st.container(border=True):
-        st.markdown(
-            "<div class='card-title'>💡 Tips Menjaga Kesehatan Saat Kualitas Udara Tidak Sehat</div>"
-            "<div style='font-size:14px; color:#475569; margin-bottom:18px; line-height:1.5;'>"
-            "Langkah praktis untuk melindungi diri ketika polusi udara meningkat."
-            "</div>",
-            unsafe_allow_html=True,
-        )
-
+        # Judul & subjudul sudah termuat di dalam SVG, jadi tidak perlu header terpisah.
         # 5 kartu tips = SVG desain Figma (assets/jaga_kesehatan.svg).
         tips_svg = svg_inline("jaga_kesehatan.svg")
         if tips_svg:
