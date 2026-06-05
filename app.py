@@ -2992,10 +2992,6 @@ def page_edukasi(data):
     with dc1:
         with st.container(border=True):
             st.markdown(
-                "<div class='card-title'>Dampak Kualitas Udara terhadap Kesehatan</div>"
-                "<div style='font-size:14px; color:#475569; margin-bottom:18px; line-height:1.5;'>"
-                "Pengaruh polusi udara terhadap berbagai kelompok dan sistem tubuh."
-                "</div>",
                 unsafe_allow_html=True,
             )
 
@@ -3062,10 +3058,6 @@ def page_edukasi(data):
     # ============================================================
     with st.container(border=True):
         st.markdown(
-            "<div class='card-title'>💡 Tips Menjaga Kesehatan Saat Kualitas Udara Tidak Sehat</div>"
-            "<div style='font-size:14px; color:#475569; margin-bottom:18px; line-height:1.5;'>"
-            "Langkah praktis untuk melindungi diri ketika polusi udara meningkat."
-            "</div>",
             unsafe_allow_html=True,
         )
 
