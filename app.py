@@ -1122,23 +1122,27 @@ def inject_css():
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 7px 0;
-        font-size: 14px;
+        padding: 5px 0;
+        font-size: 13px;
+        gap: 8px;
     }
     .donut-legend-left {
         display: flex;
         align-items: center;
-        gap: 9px;
+        gap: 8px;
         color: #0F172A;
+        white-space: nowrap;
     }
     .donut-legend-dot {
         width: 10px;
         height: 10px;
         border-radius: 999px;
+        flex-shrink: 0;
     }
     .donut-legend-pct {
         font-weight: 700;
         color: #0F172A;
+        flex-shrink: 0;
     }
 
     /* Responsivitas tablet/mobile */
@@ -3026,27 +3030,38 @@ def page_edukasi(data):
                 hovertemplate="<b>%{label}</b><br>%{value}%<extra></extra>",
             ))
             fig.update_layout(
-                height=210,
-                margin=dict(l=0, r=0, t=4, b=4),
+                height=200,
+                margin=dict(l=0, r=0, t=0, b=0),
                 showlegend=False,
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
             )
-            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-            # Legend — SATU blok HTML agar tidak bocor keluar card
-            legend_html = "<div style='padding-top:6px;'>"
-            for nama, (pct, warna) in sumber.items():
-                legend_html += (
-                    f"<div class='donut-legend-row'>"
-                    f"<div class='donut-legend-left'>"
-                    f"<div class='donut-legend-dot' style='background:{warna};'></div>"
-                    f"<span>{nama}</span></div>"
-                    f"<div class='donut-legend-pct'>{pct}%</div>"
-                    f"</div>"
-                )
-            legend_html += "</div>"
-            st.markdown(legend_html, unsafe_allow_html=True)
+            # Donut (kiri) + legend (kanan), sejajar — sesuai desain Figma.
+            try:
+                pc1, pc2 = st.columns([0.8, 1.2], vertical_alignment="center")
+            except TypeError:
+                # Fallback Streamlit < 1.36 (tanpa vertical_alignment)
+                pc1, pc2 = st.columns([0.8, 1.2])
+
+            with pc1:
+                st.plotly_chart(fig, use_container_width=True,
+                                config={"displayModeBar": False})
+
+            with pc2:
+                # Legend — SATU blok HTML agar tidak bocor keluar card
+                legend_html = "<div>"
+                for nama, (pct, warna) in sumber.items():
+                    legend_html += (
+                        f"<div class='donut-legend-row'>"
+                        f"<div class='donut-legend-left'>"
+                        f"<div class='donut-legend-dot' style='background:{warna};'></div>"
+                        f"<span>{nama}</span></div>"
+                        f"<div class='donut-legend-pct'>{pct}%</div>"
+                        f"</div>"
+                    )
+                legend_html += "</div>"
+                st.markdown(legend_html, unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
