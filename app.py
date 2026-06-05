@@ -46,6 +46,22 @@ DATA_DIR = BASE_DIR / "data"
 MODELS_DIR = BASE_DIR / "models"
 ASSETS_DIR = BASE_DIR / "assets"
 
+def _leaf_icon_svg() -> str:
+    """Baca assets/leaf.svg dan kembalikan inline SVG berukuran kecil (~16px)
+    agar sejajar dengan teks "Polutan dominan"."""
+    try:
+        svg = (ASSETS_DIR / "leaf.svg").read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    return re.sub(
+        r"<svg\b",
+        "<svg style='width:16px;height:auto;vertical-align:middle;flex-shrink:0;'",
+        svg, count=1,
+    )
+
+
+LEAF_ICON_SVG = _leaf_icon_svg()
+
 # Mapping kategori ISPU -> warna, emoji, deskripsi
 KATEGORI_INFO = {
     "Baik": {
@@ -2003,7 +2019,7 @@ def page_dashboard(data):
                 st.markdown(
                     "<div style='display:flex; align-items:center; "
                     "gap:8px; font-size:15px; color:#0F172A;'>"
-                    "<span style='color:#16A34A; font-size:17px;'>🌿</span>"
+                    + LEAF_ICON_SVG +
                     "<span><strong>Polutan dominan:</strong>&nbsp; "
                     "PM2.5 (24 µg/m³)</span>"
                     "</div>",
@@ -2415,7 +2431,7 @@ def page_detail_wilayah(data):
                             f"""
                             <div style='display:flex; align-items:center; gap:8px;
                                         padding-top:16px; font-size:14px; color:#0F172A;'>
-                                <span style='color:#16A34A; font-size:16px;'>🌿</span>
+                                {LEAF_ICON_SVG}
                                 <span><strong>Polutan dominan:</strong> PM2.5 ({row["pm25"]} µg/m³)</span>
                             </div>
                             """,
