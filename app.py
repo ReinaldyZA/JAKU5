@@ -1844,9 +1844,9 @@ def render_sidebar():
         #    warnanya mengikuti status (abu-abu normal, biru saat aktif).
         NAV_ITEMS = [
             ("Dashboard", "label_dashboard.svg", "navdashboard"),
+            ("Edukasi & Insight", "label_edukasi.svg", "navedukasi"),
             ("Detail Wilayah", "detail_wilayah.svg", "navdetail"),
             ("Simulasi Prediksi ISPU", "label_prediksi.svg", "navsimulasi"),
-            ("Edukasi & Insight", "label_edukasi.svg", "navedukasi"),
         ]
         if "nav_page" not in st.session_state:
             st.session_state["nav_page"] = "Dashboard"
