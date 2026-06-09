@@ -687,6 +687,12 @@ def inject_css():
        harus naik ke stElementContainer (level 4) lalu cari sibling-nya yang
        memuat button. Modern :has() bekerja di Chrome/Edge/Safari ≥2022,
        Firefox ≥2023 — aman untuk Streamlit Community Cloud users. */
+    /* Marker hanya penanda CSS (tak terlihat) → container-nya dikolapskan
+       supaya tidak menambah celah/baris kosong di atas tombol. Elemen tetap
+       ada di DOM sehingga selektor sibling (+) di bawah tetap bekerja. */
+    [data-testid="stElementContainer"]:has(.pmkr) {
+        display: none !important;
+    }
     [data-testid="stElementContainer"]:has(.pmkr) + [data-testid="stElementContainer"] button[kind="secondary"],
     [data-testid="stElementContainer"]:has(.pmkr) + [data-testid="stElementContainer"] [data-testid="stBaseButton-secondary"] {
         border-radius: 999px !important;
@@ -2855,10 +2861,19 @@ def page_simulasi(data):
                 "Berbahaya":          "Bahaya",
             }
             pc = st.columns(5, gap="small")
+            active_preset = st.session_state.get("sim_active_preset")
             for col, (name, label) in zip(pc, preset_labels.items()):
                 with col:
+                    suffix = preset_css_suffix[name]
+                    is_active = " active" if name == active_preset else ""
+                    # Marker sibling (tak terlihat) → dibaca CSS :has() untuk
+                    # mewarnai tombol preset sesuai kategori + tandai aktif.
+                    st.markdown(
+                        f"<div class='pmkr pmkr-{suffix}{is_active}'></div>",
+                        unsafe_allow_html=True,
+                    )
                     st.button(
-                        label, key=f"preset_{preset_css_suffix[name]}",
+                        label, key=f"preset_{suffix}",
                         use_container_width=True,
                         help=f"Terapkan skenario kualitas udara {name}.",
                         on_click=apply_preset, args=(name,),
