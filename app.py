@@ -541,45 +541,45 @@ def inject_css():
     .step-bar {
         background: #EFF6FF;
         border: 1px solid #DBEAFE;
-        border-radius: 14px;
-        padding: 18px 22px;
+        border-radius: 16px;
+        padding: 24px 30px;
         display: grid;
         grid-template-columns: auto repeat(3, 1fr);
-        gap: 24px;
+        gap: 32px;
         align-items: center;
         margin-bottom: 24px;
     }
     .step-title {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 9px;
         font-weight: 700;
         color: #2563EB;
-        font-size: 15px;
+        font-size: 17px;
     }
     .step-item {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         align-items: flex-start;
     }
     .step-num {
         background: #FFFFFF;
         border: 1px solid #DBEAFE;
         color: #2563EB;
-        width: 27px;
-        height: 27px;
+        width: 31px;
+        height: 31px;
         border-radius: 999px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 700;
-        font-size: 14px;
+        font-size: 15px;
         flex-shrink: 0;
     }
     .step-text {
-        font-size: 14px;
+        font-size: 15px;
         color: #1E40AF;
-        line-height: 1.45;
+        line-height: 1.55;
     }
 
     /* ============ HASIL PREDIKSI ============ */
