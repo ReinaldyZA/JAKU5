@@ -695,15 +695,15 @@ def inject_css():
     }
     [data-testid="stElementContainer"]:has(.pmkr) + [data-testid="stElementContainer"] button[kind="secondary"],
     [data-testid="stElementContainer"]:has(.pmkr) + [data-testid="stElementContainer"] [data-testid="stBaseButton-secondary"] {
-        border-radius: 999px !important;
+        border-radius: 10px !important;
         font-weight: 600 !important;
-        padding: 7px 11px !important;
+        padding: 9px 11px !important;
         font-size: 12px !important;
         transition: all 0.2s ease-in-out !important;
         border: 1.5px solid #E5E7EB !important;
         background: #FFFFFF !important;
         color: #475569 !important;
-        min-height: 35px !important;
+        min-height: 38px !important;
     }
     /* Idle hover — outline pakai warna kategori */
     [data-testid="stElementContainer"]:has(.pmkr-baik) + [data-testid="stElementContainer"] button[kind="secondary"]:hover {
