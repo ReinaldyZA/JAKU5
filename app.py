@@ -24,6 +24,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import folium
+from folium.plugins import Fullscreen
 from streamlit_folium import st_folium
 from streamlit_option_menu import option_menu
 import joblib
@@ -2134,17 +2135,25 @@ def page_dashboard(data):
                     location=[-6.17, 106.83],
                     zoom_start=11,
                     tiles=None,
-                    zoom_control=False,
-                    scrollWheelZoom=False,
+                    zoom_control=True,
+                    scrollWheelZoom=True,
                     dragging=True,
-                    min_zoom=10,
-                    max_zoom=14,
+                    min_zoom=9,
+                    max_zoom=16,
                 )
                 folium.TileLayer(
                     tiles="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
                     attr="&copy; OpenStreetMap contributors &copy; CARTO",
                     name="Voyager",
                     control=False,
+                ).add_to(m)
+
+                # Tombol maximize/minimize (layar penuh) di pojok kanan atas.
+                Fullscreen(
+                    position="topright",
+                    title="Perbesar peta",
+                    title_cancel="Perkecil peta",
+                    force_separate_button=True,
                 ).add_to(m)
 
                 # Koordinat tampilan: Kep. Seribu (lokasi asli jauh di utara,
