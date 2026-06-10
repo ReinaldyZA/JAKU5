@@ -1159,6 +1159,25 @@ def inject_css():
         color: #0F172A;
         flex-shrink: 0;
     }
+    .info-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        background: #F1F5F9;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-top: 14px;
+        font-size: 13px;
+        color: #475569;
+        line-height: 1.5;
+    }
+    .info-card .info-icon {
+        font-size: 15px;
+        color: #64748B;
+        margin-top: 1px;
+        flex-shrink: 0;
+    }
 
     /* Responsivitas tablet/mobile */
     @media (max-width: 768px) {
@@ -3360,6 +3379,16 @@ def page_edukasi(data):
                     )
                 legend_html += "</div>"
                 st.markdown(legend_html, unsafe_allow_html=True)
+
+            st.markdown(
+                "<div class='info-card'>"
+                "<span class='info-icon'>ℹ️</span>"
+                "<span>Data bersifat <b>ilustratif</b>, bukan kondisi realtime. "
+                "Angka estimasi merujuk pada kajian umum sumber polusi udara perkotaan "
+                "dan dapat berbeda dengan kondisi aktual Jakarta.</span>"
+                "</div>",
+                unsafe_allow_html=True,
+            )
 
     st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
