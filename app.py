@@ -1159,6 +1159,10 @@ def inject_css():
         color: #0F172A;
         flex-shrink: 0;
     }
+    /* Paksa kolom Dampak & Sumber Polusi sejajar bawah */
+    div[data-testid="column"] > div[data-testid="stVerticalBlock"] {
+        height: 100%;
+    }
     .info-card {
         display: flex;
         align-items: flex-start;
@@ -1168,6 +1172,7 @@ def inject_css():
         border-radius: 10px;
         padding: 10px 14px;
         margin-top: 14px;
+        margin-bottom: 4px;
         font-size: 13px;
         color: #475569;
         line-height: 1.5;
@@ -3266,13 +3271,17 @@ def page_edukasi(data):
         kat_svg = svg_inline("ispu_kategori.svg")
         if kat_svg:
             st.markdown(kat_svg, unsafe_allow_html=True)
+        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
     # Section 2: Dampak Kesehatan + Sumber Polusi (2 kolom)
     # ============================================================
-    dc1, dc2 = st.columns([1.4, 1], gap="medium")
+    try:
+        dc1, dc2 = st.columns([1.4, 1], gap="medium", vertical_alignment="bottom")
+    except TypeError:
+        dc1, dc2 = st.columns([1.4, 1], gap="medium")
 
     # --- Dampak Kesehatan ---
     with dc1:
@@ -3383,10 +3392,13 @@ def page_edukasi(data):
             st.markdown(
                 "<div class='info-card'>"
                 "<span class='info-icon'>ℹ️</span>"
-                "<span>Data bersifat <b>ilustratif</b>, bukan kondisi realtime.</span>"
+                "<span>Data bersifat <b>ilustratif</b>, bukan kondisi realtime. "
+                "Angka estimasi merujuk pada kajian umum sumber polusi udara perkotaan "
+                "dan dapat berbeda dengan kondisi aktual Jakarta.</span>"
                 "</div>",
                 unsafe_allow_html=True,
             )
+            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
