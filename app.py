@@ -1764,79 +1764,140 @@ def prediksi_ispu_xgboost(pm10, pm25, so2, co, o3, no2, model_choice="xgboost"):
 
 
 # ================================================================
-# ENGINE DATA HARIAN BERBASIS TANGGAL (2024) + KLASIFIKASI XGBOOST
+# ENGINE DATA HARIAN BERBASIS CSV ASLI (Data_ISPU.csv) + XGBOOST
 # ----------------------------------------------------------------
-# XGBoost di proyek ini adalah CLASSIFIER (input 6 polutan -> kategori),
-# bukan model time-series. Maka untuk tiap tanggal kita bangkitkan nilai
-# polutan harian yang DETERMINISTIK (stabil & berbeda tiap tanggal/wilayah)
-# berdasarkan profil rata-rata tiap wilayah + pola musiman + akhir pekan,
-# lalu nilai tersebut diklasifikasikan oleh XGBoost. Hasilnya: tiap tanggal
-# menghasilkan ISPU & kategori yang berbeda namun konsisten (reproducible).
-# Bila nanti tersedia CSV data harian 2024 asli, cukup ganti daily_pollutants().
+# Sumber data: Data_ISPU.csv (semicolon-delimited) dari 5 stasiun SPKU
+# DKI Jakarta (DKI1-DKI5), Jan 2024 - Okt 2025. XGBoost (classifier)
+# mengklasifikasikan kategori dari 6 polutan tiap (wilayah, tanggal);
+# nilai ISPU yang ditampilkan = kolom `max` (ISPU asli BMKG).
+# Kep. Seribu TIDAK ada di CSV -> selalu "tidak ada data".
+# Stasiun -> Wilayah:
+#   DKI1 (Bundaran HI)   -> Jakarta Pusat
+#   DKI2 (Kelapa Gading) -> Jakarta Utara
+#   DKI3 (Jagakarsa)     -> Jakarta Selatan
+#   DKI4 (Lubang Buaya)  -> Jakarta Timur
+#   DKI5 (Kebon Jeruk)   -> Jakarta Barat
 # ================================================================
 WILAYAH_DKI = ["Jakarta Pusat", "Jakarta Utara", "Jakarta Barat",
                "Jakarta Selatan", "Jakarta Timur"]
 
-# Profil rata-rata polutan tiap wilayah (karakter tiap daerah)
-PROFIL_WILAYAH = {
-    "Jakarta Pusat":   {"pm25": 68, "pm10": 52, "no2": 33, "so2": 26, "co": 17.0, "o3": 22},
-    "Jakarta Utara":   {"pm25": 62, "pm10": 53, "no2": 24, "so2": 40, "co": 14.0, "o3": 24},
-    "Jakarta Barat":   {"pm25": 88, "pm10": 62, "no2": 30, "so2": 28, "co": 16.0, "o3": 40},
-    "Jakarta Selatan": {"pm25": 64, "pm10": 47, "no2": 40, "so2": 45, "co": 13.0, "o3": 20},
-    "Jakarta Timur":   {"pm25": 66, "pm10": 56, "no2": 18, "so2": 32, "co": 16.0, "o3": 24},
-    "Kep. Seribu":     {"pm25": 17, "pm10": 22, "no2": 9,  "so2": 4,  "co": 1.0,  "o3": 26},
-}
+FITUR_CSV = ["pm_sepuluh", "pm_duakomalima", "sulfur_dioksida",
+             "karbon_monoksida", "ozon", "nitrogen_dioksida"]
+
+_PREFIX_WILAYAH = (
+    ("DKI1", "Jakarta Pusat"), ("DKI2", "Jakarta Utara"),
+    ("DKI3", "Jakarta Selatan"), ("DKI4", "Jakarta Timur"),
+    ("DKI5", "Jakarta Barat"),
+)
 
 
-def _seed_tanggal(wilayah, d):
-    h = hashlib.md5(f"{wilayah}|{d.isoformat()}".encode()).hexdigest()
-    return int(h[:8], 16)
+def _stasiun_ke_wilayah(s):
+    s = str(s)
+    for prefix, wil in _PREFIX_WILAYAH:
+        if s.startswith(prefix):
+            return wil
+    return None
 
 
 @st.cache_data(show_spinner=False)
-def daily_pollutants(wilayah, d_iso):
-    """Nilai 6 polutan harian deterministik untuk (wilayah, tanggal)."""
-    d = date.fromisoformat(d_iso)
-    prof = PROFIL_WILAYAH.get(wilayah, PROFIL_WILAYAH["Jakarta Pusat"])
-    rng = np.random.default_rng(_seed_tanggal(wilayah, d))
-    doy = d.timetuple().tm_yday
-    # Musim kemarau (pertengahan tahun) cenderung lebih berpolusi
-    musim = 1.0 + 0.22 * math.sin((doy - 110) / 366 * 2 * math.pi)
-    akhir_pekan = 0.92 if d.weekday() >= 5 else 1.0
-    out = {}
-    for k, base in prof.items():
-        nilai = base * musim * akhir_pekan * float(rng.normal(1.0, 0.18))
-        out[k] = round(max(0.1, nilai), 1)
-    return out
+def load_ispu_harian():
+    """Baca Data_ISPU.csv, petakan stasiun->wilayah, bangun kolom tanggal,
+    dan imputasi median untuk polutan yang kosong (mengikuti pipeline notebook)."""
+    path = None
+    for p in [BASE_DIR / "Data_ISPU.csv", DATA_DIR / "Data_ISPU.csv"]:
+        if p.exists():
+            path = p
+            break
+    if path is None:
+        return pd.DataFrame()
+    df = pd.read_csv(path, sep=";")
+    df["wilayah"] = df["stasiun"].map(_stasiun_ke_wilayah)
+    df = df[df["wilayah"].notna()].copy()
+    df["tahun"] = (df["periode_data"] // 100).astype(int)
+    df["tgl"] = pd.to_datetime(
+        dict(year=df["tahun"], month=df["bulan"], day=df["tanggal"]),
+        errors="coerce",
+    )
+    df = df[df["tgl"].notna()].copy()
+    df["tgl_date"] = df["tgl"].dt.date
+    # Imputasi median per kolom polutan (sama seperti notebook CRISP-DM)
+    for c in FITUR_CSV:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+        df[c] = df[c].fillna(df[c].median())
+    df["max"] = pd.to_numeric(df["max"], errors="coerce")
+    # Bila ada >1 baris per (wilayah, tanggal) — ambil yang pertama
+    df = df.drop_duplicates(subset=["wilayah", "tgl_date"], keep="first")
+    return df
+
+
+@st.cache_data(show_spinner=False)
+def rentang_data():
+    """Rentang tanggal yang dipakai date picker — dibatasi ke tahun 2024."""
+    lo_cap, hi_cap = date(2024, 1, 1), date(2024, 12, 31)
+    df = load_ispu_harian()
+    if df.empty:
+        return (lo_cap, hi_cap)
+    lo = max(min(df["tgl_date"]), lo_cap)
+    hi = min(max(df["tgl_date"]), hi_cap)
+    if lo > hi:                      # CSV tak punya data 2024 → pakai default
+        return (lo_cap, hi_cap)
+    return (lo, hi)
 
 
 @st.cache_data(show_spinner=False)
 def predict_wilayah_tanggal(wilayah, d_iso, model_choice="xgboost"):
-    """Polutan harian -> XGBoost -> kategori & ISPU untuk satu wilayah/tanggal."""
-    v = daily_pollutants(wilayah, d_iso)
-    res = prediksi_ispu_xgboost(v["pm10"], v["pm25"], v["so2"],
-                                v["co"], v["o3"], v["no2"], model_choice)
-    return {"kategori": res["kategori"], "ispu": int(res["nilai_ispu"]),
-            "pm25": v["pm25"], "pm10": v["pm10"], "no2": v["no2"],
-            "so2": v["so2"], "co": v["co"], "o3": v["o3"]}
+    """Ambil polutan asli (wilayah, tanggal) dari CSV -> XGBoost -> kategori.
+    Mengembalikan None bila wilayah/tanggal tidak ada di CSV (mis. Kep. Seribu)."""
+    df = load_ispu_harian()
+    if df.empty:
+        return None
+    d = date.fromisoformat(d_iso)
+    sub = df[(df["wilayah"] == wilayah) & (df["tgl_date"] == d)]
+    if sub.empty:
+        return None
+    r = sub.iloc[0]
+    res = prediksi_ispu_xgboost(
+        r["pm_sepuluh"], r["pm_duakomalima"], r["sulfur_dioksida"],
+        r["karbon_monoksida"], r["ozon"], r["nitrogen_dioksida"], model_choice,
+    )
+    # Nilai ISPU = kolom `max` (ISPU asli); fallback ke estimasi model bila kosong
+    if pd.notna(r["max"]) and r["max"] > 0:
+        ispu = int(round(r["max"]))
+    else:
+        ispu = int(res["nilai_ispu"])
+    return {
+        "kategori": res["kategori"], "ispu": ispu,
+        "pm25": round(float(r["pm_duakomalima"]), 1),
+        "pm10": round(float(r["pm_sepuluh"]), 1),
+        "no2": round(float(r["nitrogen_dioksida"]), 1),
+        "so2": round(float(r["sulfur_dioksida"]), 1),
+        "co": round(float(r["karbon_monoksida"]), 1),
+        "o3": round(float(r["ozon"]), 1),
+    }
 
 
 @st.cache_data(show_spinner=False)
 def predict_dki_tanggal(d_iso, model_choice="xgboost"):
-    """Rata-rata polutan 5 wilayah daratan DKI -> XGBoost -> kategori & ISPU."""
-    rows = [daily_pollutants(w, d_iso) for w in WILAYAH_DKI]
+    """Rata-rata polutan 5 wilayah DKI pada tanggal tsb -> XGBoost -> kategori.
+    None bila tidak ada satu pun wilayah berdata pada tanggal itu."""
+    rows = [predict_wilayah_tanggal(w, d_iso, model_choice) for w in WILAYAH_DKI]
+    rows = [r for r in rows if r is not None]
+    if not rows:
+        return None
     avg = {k: round(float(np.mean([r[k] for r in rows])), 1)
            for k in ["pm25", "pm10", "no2", "so2", "co", "o3"]}
     res = prediksi_ispu_xgboost(avg["pm10"], avg["pm25"], avg["so2"],
                                 avg["co"], avg["o3"], avg["no2"], model_choice)
-    out = {"kategori": res["kategori"], "ispu": int(res["nilai_ispu"])}
+    out = {"kategori": res["kategori"],
+           "ispu": int(round(float(np.mean([r["ispu"] for r in rows]))))}
     out.update(avg)
     return out
 
 
 def rentang_tanggal(sel, mulai_offset, jumlah):
-    """List tanggal: dari (sel+mulai_offset) sebanyak `jumlah` hari (dibatasi 2024)."""
-    lo, hi = date(2024, 1, 1), date(2024, 12, 31)
+    """List tanggal: dari (sel+mulai_offset) sebanyak `jumlah` hari,
+    dibatasi rentang tanggal yang tersedia di CSV."""
+    lo, hi = rentang_data()
     hasil = []
     for i in range(jumlah):
         d = sel + timedelta(days=mulai_offset + i)
@@ -1846,24 +1907,27 @@ def rentang_tanggal(sel, mulai_offset, jumlah):
 
 
 def get_selected_date():
-    """Tanggal terpilih global (default 15 Juni 2024)."""
+    """Tanggal terpilih global (default 15 Juni 2024, diklamp ke rentang CSV)."""
+    lo, hi = rentang_data()
     if "sel_tanggal" not in st.session_state:
-        st.session_state["sel_tanggal"] = date(2024, 6, 15)
+        default = date(2024, 6, 15)
+        st.session_state["sel_tanggal"] = min(max(default, lo), hi)
     return st.session_state["sel_tanggal"]
 
 
 def render_date_picker():
-    """Date picker kalender (rentang penuh 2024) di pojok kanan header.
+    """Date picker kalender (rentang sesuai CSV) di pojok kanan header.
     Memakai SATU key global sehingga sinkron di semua halaman."""
-    get_selected_date()  # pastikan ter-inisialisasi
+    lo, hi = rentang_data()
+    get_selected_date()  # pastikan ter-inisialisasi & diklamp
     st.markdown(
         "<div class='updated-card-label' style='text-align:right; "
-        "margin-bottom:2px;'>📅 Pilih Tanggal (2024)</div>",
+        "margin-bottom:2px;'>📅 Pilih Tanggal</div>",
         unsafe_allow_html=True,
     )
     return st.date_input(
         "Pilih Tanggal", key="sel_tanggal",
-        min_value=date(2024, 1, 1), max_value=date(2024, 12, 31),
+        min_value=lo, max_value=hi,
         format="DD/MM/YYYY", label_visibility="collapsed",
     )
 
@@ -2077,6 +2141,10 @@ def page_dashboard(data):
     with col_left:
         with st.container(border=True, height=DASH_ROW1_H):   # tinggi tetap → sejajar
             dki_today = predict_dki_tanggal(sel_tgl.isoformat())
+            if dki_today is None:
+                dki_today = {"kategori": "Sedang", "ispu": 0, "pm25": "-",
+                             "pm10": "-", "no2": "-", "so2": "-",
+                             "co": "-", "o3": "-"}
             ispu_avg = dki_today["ispu"]
             kat = dki_today["kategori"]
             info = KATEGORI_INFO[kat]
@@ -2236,12 +2304,16 @@ def page_dashboard(data):
             )
 
             # Snapshot per wilayah untuk tanggal terpilih (lat/lon dari data
-            # statis; ispu/kategori/polutan dari prediksi XGBoost per tanggal).
+            # statis; ispu/kategori dari prediksi XGBoost atas data CSV asli).
+            # Wilayah tanpa data di CSV (mis. Kep. Seribu) -> ada=False.
             wil_today = data["wilayah"][["wilayah", "lat", "lon"]].copy()
-            _pred_rows = [predict_wilayah_tanggal(w, sel_tgl.isoformat())
-                          for w in wil_today["wilayah"]]
-            wil_today["ispu"] = [p["ispu"] for p in _pred_rows]
-            wil_today["kategori"] = [p["kategori"] for p in _pred_rows]
+            _pred = {w: predict_wilayah_tanggal(w, sel_tgl.isoformat())
+                     for w in wil_today["wilayah"]}
+            wil_today["ada"] = wil_today["wilayah"].map(lambda w: _pred[w] is not None)
+            wil_today["ispu"] = wil_today["wilayah"].map(
+                lambda w: _pred[w]["ispu"] if _pred[w] else None)
+            wil_today["kategori"] = wil_today["wilayah"].map(
+                lambda w: _pred[w]["kategori"] if _pred[w] else None)
 
             # Peta (kiri) + daftar status wilayah & legend (kanan)
             mc1, mc2 = st.columns([1.4, 1], gap="medium")
@@ -2279,6 +2351,8 @@ def page_dashboard(data):
 
                 bounds = []
                 for _, row in wil_today.iterrows():
+                    if not row["ada"]:
+                        continue  # wilayah tanpa data (mis. Kep. Seribu) → tanpa marker
                     lat, lon = display_coords.get(
                         row["wilayah"], (row["lat"], row["lon"])
                     )
@@ -2320,13 +2394,20 @@ def page_dashboard(data):
                 # Daftar status kualitas udara per wilayah (warna sesuai kategori)
                 list_html = "<div style='padding-top:2px;'>"
                 for _, row in wil_today.iterrows():
-                    kat_w = row["kategori"]
+                    if row["ada"]:
+                        nilai_html = (
+                            f"<span style='color:#1E293B; font-weight:700;'>"
+                            f"{row['kategori']}</span>"
+                        )
+                    else:
+                        nilai_html = (
+                            "<span style='color:#94A3B8; font-weight:600; "
+                            "font-style:italic;'>Tidak ada data</span>"
+                        )
                     list_html += (
                         "<div style='font-size:14px; color:#64748B; "
                         "margin-bottom:9px;'>"
-                        f"{row['wilayah']}: "
-                        f"<span style='color:#1E293B; font-weight:700;'>"
-                        f"{kat_w}</span></div>"
+                        f"{row['wilayah']}: {nilai_html}</div>"
                     )
                 list_html += "</div>"
                 st.markdown(list_html, unsafe_allow_html=True)
@@ -2361,6 +2442,8 @@ def page_dashboard(data):
             rows_html = ""
             for d in rentang_tanggal(sel_tgl, 1, 7):
                 p = predict_dki_tanggal(d.isoformat())
+                if p is None:
+                    continue
                 kat2 = p["kategori"]
                 warna = KATEGORI_INFO.get(kat2, KATEGORI_INFO["Sedang"])["warna"]
                 tanggal = d.strftime("%d %b %Y")
@@ -2386,9 +2469,11 @@ def page_dashboard(data):
             )
 
             _tgl_tren = rentang_tanggal(sel_tgl, -6, 7)  # 7 hari s.d. tanggal terpilih
+            _pts = [(d, predict_dki_tanggal(d.isoformat())) for d in _tgl_tren]
+            _pts = [(d, p) for d, p in _pts if p is not None]
             df_tren = pd.DataFrame({
-                "tanggal": [pd.Timestamp(d) for d in _tgl_tren],
-                "ispu": [predict_dki_tanggal(d.isoformat())["ispu"] for d in _tgl_tren],
+                "tanggal": [pd.Timestamp(d) for d, _ in _pts],
+                "ispu": [p["ispu"] for _, p in _pts],
             })
             df_tren["label_x"] = df_tren["tanggal"].dt.strftime("%d %b")
 
@@ -2557,6 +2642,10 @@ def page_detail_wilayah(data):
                 continue
 
             row = predict_wilayah_tanggal(wilayah, sel_tgl.isoformat())
+            if row is None:
+                # Tidak ada data untuk wilayah ini pada tanggal terpilih
+                render_empty_state_wilayah(wilayah)
+                continue
             kat = row["kategori"]
             info = KATEGORI_INFO[kat]
 
@@ -2659,10 +2748,11 @@ def page_detail_wilayah(data):
                         f"<div class='card-title'>Prediksi ISPU di {wilayah} (7 Hari Mendatang)</div>",
                         unsafe_allow_html=True,
                     )
-                    pred_w = data["prediksi"][data["prediksi"]["wilayah"] == wilayah]
                     rows_html = ""
                     for d in rentang_tanggal(sel_tgl, 1, 7):
                         p = predict_wilayah_tanggal(wilayah, d.isoformat())
+                        if p is None:
+                            continue
                         kat2 = p["kategori"]
                         warna = KATEGORI_INFO.get(kat2, KATEGORI_INFO["Sedang"])["warna"]
                         tanggal = d.strftime("%d %b %Y")
@@ -2685,10 +2775,12 @@ def page_detail_wilayah(data):
                     )
 
                     _tgl_tren = rentang_tanggal(sel_tgl, -6, 7)
+                    _pts = [(d, predict_wilayah_tanggal(wilayah, d.isoformat()))
+                            for d in _tgl_tren]
+                    _pts = [(d, p) for d, p in _pts if p is not None]
                     df_tren = pd.DataFrame({
-                        "tanggal": [pd.Timestamp(d) for d in _tgl_tren],
-                        "ispu_w": [predict_wilayah_tanggal(wilayah, d.isoformat())["ispu"]
-                                   for d in _tgl_tren],
+                        "tanggal": [pd.Timestamp(d) for d, _ in _pts],
+                        "ispu_w": [p["ispu"] for _, p in _pts],
                     })
                     df_tren["label_x"] = df_tren["tanggal"].dt.strftime("%d %b")
 
