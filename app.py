@@ -69,35 +69,35 @@ LEAF_ICON_SVG = _leaf_icon_svg()
 KATEGORI_INFO = {
     "Baik": {
         "warna": "#16A34A", "warna_bg": "#DCFCE7", "emoji": "😊",
-        "rentang": "0 - 50",
+        "rentang": "0-50",
         "deskripsi": "Udara bersih, aman untuk beraktivitas sehari-hari.",
         "rekom_emoji": "🌿",
         "rekomendasi": "Cocok untuk olahraga, jalan kaki, dan aktivitas outdoor lainnya. Nikmati udara segar dan tetap jaga pola hidup sehat."
     },
     "Sedang": {
         "warna": "#2563EB", "warna_bg": "#DBEAFE", "emoji": "😐",
-        "rentang": "51 - 100",
+        "rentang": "51-100",
         "deskripsi": "Masih dapat diterima untuk beraktivitas di luar ruangan.",
         "rekom_emoji": "🚶",
         "rekomendasi": "Cocok untuk olahraga ringan dan aktivitas harian. Gunakan masker jika sensitif terhadap polusi dan hindari paparan terlalu lama."
     },
     "Tidak Sehat": {
         "warna": "#F59E0B", "warna_bg": "#FEF3C7", "emoji": "😷",
-        "rentang": "101 - 200",
+        "rentang": "101-200",
         "deskripsi": "Kurangi aktivitas luar ruangan, terutama bagi kelompok sensitif.",
         "rekom_emoji": "⚠️",
         "rekomendasi": "Kurangi aktivitas luar ruangan dalam waktu lama. Disarankan menggunakan masker terutama bagi anak-anak, lansia, dan penderita gangguan pernapasan."
     },
     "Sangat Tidak Sehat": {
         "warna": "#EF4444", "warna_bg": "#FEE2E2", "emoji": "🤢",
-        "rentang": "201 - 300",
+        "rentang": "201-300",
         "deskripsi": "Hindari aktivitas luar ruangan. Gunakan masker jika harus keluar.",
         "rekom_emoji": "😷",
         "rekomendasi": "Hindari aktivitas outdoor jika tidak mendesak. Tetap berada di dalam ruangan dan gunakan masker saat harus keluar rumah."
     },
     "Berbahaya": {
         "warna": "#7C3AED", "warna_bg": "#EDE9FE", "emoji": "☠️",
-        "rentang": "≥ 301",
+        "rentang": ">301",
         "deskripsi": "Hindari semua aktivitas luar ruangan. Tetap di dalam ruangan.",
         "rekom_emoji": "🚨",
         "rekomendasi": "Tetap berada di dalam ruangan dan hindari seluruh aktivitas luar. Tutup ventilasi udara dan gunakan pelindung pernapasan jika harus keluar."
@@ -2180,9 +2180,9 @@ def page_dashboard(data):
                     # Lingkaran berwarna kategori
                     folium.CircleMarker(
                         location=[lat, lon],
-                        radius=23,
+                        radius=18,
                         color="white",
-                        weight=3,
+                        weight=2.5,
                         fill=True,
                         fillColor=warna,
                         fillOpacity=0.95,
@@ -2192,12 +2192,12 @@ def page_dashboard(data):
                     folium.map.Marker(
                         [lat, lon],
                         icon=folium.DivIcon(
-                            icon_size=(46, 46),
-                            icon_anchor=(23, 23),
+                            icon_size=(36, 36),
+                            icon_anchor=(18, 18),
                             html=(
-                                "<div style='font-size:13px; font-weight:800; "
+                                "<div style='font-size:12px; font-weight:800; "
                                 "color:white; text-align:center; "
-                                f"line-height:46px;'>{row['ispu']}</div>"
+                                f"line-height:36px;'>{row['ispu']}</div>"
                             ),
                         ),
                     ).add_to(m)
@@ -2216,9 +2216,10 @@ def page_dashboard(data):
                     )["warna"]
                     list_html += (
                         "<div style='font-size:14px; color:#334155; "
-                        "margin-bottom:10px;'>"
+                        "margin-bottom:7px;'>"
                         f"{row['wilayah']}: "
-                        f"<strong style='color:{warna};'>{kat_w}</strong></div>"
+                        f"<span style='color:{warna}; font-weight:600;'>"
+                        f"{kat_w}</span></div>"
                     )
                 list_html += "</div>"
                 st.markdown(list_html, unsafe_allow_html=True)
@@ -2228,16 +2229,15 @@ def page_dashboard(data):
                 # Legend kategori (Keterangan:)
                 render_legend_safe(KATEGORI_INFO)
 
-            # Tombol "Lihat Selengkapnya" di bawah peta (outline pill, kiri)
+            # Tombol "Lihat Selengkapnya" di bawah peta (outline pill, kiri,
+            # auto-width agar kompak seperti desain Figma).
             st.markdown("<div style='margin-top:10px;'></div>",
                         unsafe_allow_html=True)
-            bcol, _bsp = st.columns([1.3, 1.2])
-            with bcol:
-                if st.button("Lihat Selengkapnya  →",
-                             key="btn_selengkapnya",
-                             use_container_width=True):
-                    st.session_state["jump_to_detail"] = True
-                    st.rerun()
+            if st.button("Lihat Selengkapnya  →",
+                         key="btn_selengkapnya",
+                         use_container_width=False):
+                st.session_state["jump_to_detail"] = True
+                st.rerun()
 
     # ──────────────── ROW 2: PREDIKSI + TREN ────────────────
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
