@@ -3063,11 +3063,46 @@ def page_edukasi(data):
     # --- Dampak Kesehatan ---
     with dc1:
         with st.container(border=True):
-            # Judul & subjudul sudah termuat di dalam SVG, jadi tidak perlu header terpisah.
-            # 4 kartu dampak = SVG desain Figma (assets/dampak_kualitas.svg).
-            dampak_svg = svg_inline("dampak_kualitas.svg")
-            if dampak_svg:
-                st.markdown(dampak_svg, unsafe_allow_html=True)
+            # Dirender sebagai HTML (bukan SVG) supaya wording mudah diperbarui.
+            # Layout meniru desain Figma: judul + grid 2 kolom berisi 4 dampak,
+            # tiap item = ikon emoji dalam lingkaran + judul + deskripsi.
+            dampak_items = [
+                ("🫁", "Saluran Pernapasan",
+                 "Polusi udara dapat menyebabkan iritasi, batuk, sesak napas, "
+                 "dan memperparah asma."),
+                ("❤️", "Jantung &amp; Pembuluh Darah",
+                 "Paparan polusi jangka panjang meningkatkan risiko penyakit "
+                 "jantung dan tekanan darah tinggi."),
+                ("👶", "Anak-anak",
+                 "Anak-anak lebih rentan mengalami infeksi saluran pernapasan "
+                 "dan gangguan perkembangan paru-paru."),
+                ("🧓", "Lansia",
+                 "Lansia lebih berisiko mengalami gangguan kesehatan akibat "
+                 "polusi udara, terutama yang memiliki penyakit bawaan."),
+            ]
+            cells = ""
+            for _emoji, _judul, _desc in dampak_items:
+                cells += (
+                    "<div style='display:flex; gap:14px; align-items:flex-start;'>"
+                    "<div style='flex-shrink:0; width:44px; height:44px; "
+                    "border-radius:999px; background:#F1F5F9; display:flex; "
+                    "align-items:center; justify-content:center; font-size:20px; "
+                    f"line-height:1;'>{_emoji}</div>"
+                    "<div>"
+                    "<div style='font-weight:700; color:#111827; font-size:16px; "
+                    f"margin-bottom:4px;'>{_judul}</div>"
+                    "<div style='font-size:14px; color:#475569; "
+                    f"line-height:1.5;'>{_desc}</div>"
+                    "</div>"
+                    "</div>"
+                )
+            dampak_html = (
+                "<div style='font-weight:700; color:#111827; font-size:18px; "
+                "margin-bottom:18px;'>Dampak Kualitas Udara terhadap Kesehatan</div>"
+                "<div style='display:grid; grid-template-columns:1fr 1fr; "
+                f"gap:22px 28px;'>{cells}</div>"
+            )
+            st.markdown(dampak_html, unsafe_allow_html=True)
 
     # --- Sumber Polusi (donut chart) ---
     with dc2:
