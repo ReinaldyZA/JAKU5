@@ -15,8 +15,11 @@ Halaman:
 import os
 import io
 import re
+import math
+import hashlib
 import base64
 from pathlib import Path
+from datetime import date, timedelta
 
 import numpy as np
 import pandas as pd
@@ -1760,6 +1763,111 @@ def prediksi_ispu_xgboost(pm10, pm25, so2, co, o3, no2, model_choice="xgboost"):
     }
 
 
+# ================================================================
+# ENGINE DATA HARIAN BERBASIS TANGGAL (2024) + KLASIFIKASI XGBOOST
+# ----------------------------------------------------------------
+# XGBoost di proyek ini adalah CLASSIFIER (input 6 polutan -> kategori),
+# bukan model time-series. Maka untuk tiap tanggal kita bangkitkan nilai
+# polutan harian yang DETERMINISTIK (stabil & berbeda tiap tanggal/wilayah)
+# berdasarkan profil rata-rata tiap wilayah + pola musiman + akhir pekan,
+# lalu nilai tersebut diklasifikasikan oleh XGBoost. Hasilnya: tiap tanggal
+# menghasilkan ISPU & kategori yang berbeda namun konsisten (reproducible).
+# Bila nanti tersedia CSV data harian 2024 asli, cukup ganti daily_pollutants().
+# ================================================================
+WILAYAH_DKI = ["Jakarta Pusat", "Jakarta Utara", "Jakarta Barat",
+               "Jakarta Selatan", "Jakarta Timur"]
+
+# Profil rata-rata polutan tiap wilayah (karakter tiap daerah)
+PROFIL_WILAYAH = {
+    "Jakarta Pusat":   {"pm25": 68, "pm10": 52, "no2": 33, "so2": 26, "co": 17.0, "o3": 22},
+    "Jakarta Utara":   {"pm25": 62, "pm10": 53, "no2": 24, "so2": 40, "co": 14.0, "o3": 24},
+    "Jakarta Barat":   {"pm25": 88, "pm10": 62, "no2": 30, "so2": 28, "co": 16.0, "o3": 40},
+    "Jakarta Selatan": {"pm25": 64, "pm10": 47, "no2": 40, "so2": 45, "co": 13.0, "o3": 20},
+    "Jakarta Timur":   {"pm25": 66, "pm10": 56, "no2": 18, "so2": 32, "co": 16.0, "o3": 24},
+    "Kep. Seribu":     {"pm25": 17, "pm10": 22, "no2": 9,  "so2": 4,  "co": 1.0,  "o3": 26},
+}
+
+
+def _seed_tanggal(wilayah, d):
+    h = hashlib.md5(f"{wilayah}|{d.isoformat()}".encode()).hexdigest()
+    return int(h[:8], 16)
+
+
+@st.cache_data(show_spinner=False)
+def daily_pollutants(wilayah, d_iso):
+    """Nilai 6 polutan harian deterministik untuk (wilayah, tanggal)."""
+    d = date.fromisoformat(d_iso)
+    prof = PROFIL_WILAYAH.get(wilayah, PROFIL_WILAYAH["Jakarta Pusat"])
+    rng = np.random.default_rng(_seed_tanggal(wilayah, d))
+    doy = d.timetuple().tm_yday
+    # Musim kemarau (pertengahan tahun) cenderung lebih berpolusi
+    musim = 1.0 + 0.22 * math.sin((doy - 110) / 366 * 2 * math.pi)
+    akhir_pekan = 0.92 if d.weekday() >= 5 else 1.0
+    out = {}
+    for k, base in prof.items():
+        nilai = base * musim * akhir_pekan * float(rng.normal(1.0, 0.18))
+        out[k] = round(max(0.1, nilai), 1)
+    return out
+
+
+@st.cache_data(show_spinner=False)
+def predict_wilayah_tanggal(wilayah, d_iso, model_choice="xgboost"):
+    """Polutan harian -> XGBoost -> kategori & ISPU untuk satu wilayah/tanggal."""
+    v = daily_pollutants(wilayah, d_iso)
+    res = prediksi_ispu_xgboost(v["pm10"], v["pm25"], v["so2"],
+                                v["co"], v["o3"], v["no2"], model_choice)
+    return {"kategori": res["kategori"], "ispu": int(res["nilai_ispu"]),
+            "pm25": v["pm25"], "pm10": v["pm10"], "no2": v["no2"],
+            "so2": v["so2"], "co": v["co"], "o3": v["o3"]}
+
+
+@st.cache_data(show_spinner=False)
+def predict_dki_tanggal(d_iso, model_choice="xgboost"):
+    """Rata-rata polutan 5 wilayah daratan DKI -> XGBoost -> kategori & ISPU."""
+    rows = [daily_pollutants(w, d_iso) for w in WILAYAH_DKI]
+    avg = {k: round(float(np.mean([r[k] for r in rows])), 1)
+           for k in ["pm25", "pm10", "no2", "so2", "co", "o3"]}
+    res = prediksi_ispu_xgboost(avg["pm10"], avg["pm25"], avg["so2"],
+                                avg["co"], avg["o3"], avg["no2"], model_choice)
+    out = {"kategori": res["kategori"], "ispu": int(res["nilai_ispu"])}
+    out.update(avg)
+    return out
+
+
+def rentang_tanggal(sel, mulai_offset, jumlah):
+    """List tanggal: dari (sel+mulai_offset) sebanyak `jumlah` hari (dibatasi 2024)."""
+    lo, hi = date(2024, 1, 1), date(2024, 12, 31)
+    hasil = []
+    for i in range(jumlah):
+        d = sel + timedelta(days=mulai_offset + i)
+        if lo <= d <= hi:
+            hasil.append(d)
+    return hasil
+
+
+def get_selected_date():
+    """Tanggal terpilih global (default 15 Juni 2024)."""
+    if "sel_tanggal" not in st.session_state:
+        st.session_state["sel_tanggal"] = date(2024, 6, 15)
+    return st.session_state["sel_tanggal"]
+
+
+def render_date_picker():
+    """Date picker kalender (rentang penuh 2024) di pojok kanan header.
+    Memakai SATU key global sehingga sinkron di semua halaman."""
+    get_selected_date()  # pastikan ter-inisialisasi
+    st.markdown(
+        "<div class='updated-card-label' style='text-align:right; "
+        "margin-bottom:2px;'>📅 Pilih Tanggal (2024)</div>",
+        unsafe_allow_html=True,
+    )
+    return st.date_input(
+        "Pilih Tanggal", key="sel_tanggal",
+        min_value=date(2024, 1, 1), max_value=date(2024, 12, 31),
+        format="DD/MM/YYYY", label_visibility="collapsed",
+    )
+
+
 def render_popup_polutan():
     """
     Popup "Informasi Polutan" - dipakai di Dashboard, Detail Wilayah,
@@ -1914,10 +2022,10 @@ def render_sidebar():
             <div class='sidebar-footer'>
                 <div class='sidebar-footer-title'>Data tidak realtime</div>
                 <div class='sidebar-footer-desc'>
-                    Data yang ditampilkan berdasarkan sampel dan diperbarui secara berkala.
+                    Hasil dihitung dari data sampel harian 2024 dan model XGBoost. Pilih tanggal di kanan atas untuk melihat prediksi.
                 </div>
-                <div class='sidebar-footer-ts-label'>Data terakhir diperbarui</div>
-                <div class='sidebar-footer-ts'>26 Mei 2025, 10:00 WIB</div>
+                <div class='sidebar-footer-ts-label'>Periode data</div>
+                <div class='sidebar-footer-ts'>1 Jan – 31 Des 2024</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -1954,14 +2062,7 @@ def page_dashboard(data):
             unsafe_allow_html=True,
         )
     with head2:
-        st.markdown(
-            "<div style='display:flex; justify-content:flex-end; padding-top:6px;'>"
-            "<div class='updated-card'>"
-            "<div class='updated-card-label'>📅 Data terakhir diperbarui</div>"
-            "<div class='updated-card-value'>15 Juni 2024, 10:00 WIB</div>"
-            "</div></div>",
-            unsafe_allow_html=True,
-        )
+        sel_tgl = render_date_picker()
 
     # ──────────────── ROW 1: HERO ISPU + PETA WILAYAH ────────────────
     # Tinggi tetap kartu per baris supaya dua kartu sebaris SEJAJAR bawahnya.
@@ -1975,13 +2076,15 @@ def page_dashboard(data):
     # ─── KIRI: Hero ISPU ───
     with col_left:
         with st.container(border=True, height=DASH_ROW1_H):   # tinggi tetap → sejajar
-            ispu_avg = 78
-            kat = kategori_dari_ispu(ispu_avg)
+            dki_today = predict_dki_tanggal(sel_tgl.isoformat())
+            ispu_avg = dki_today["ispu"]
+            kat = dki_today["kategori"]
             info = KATEGORI_INFO[kat]
 
+            tgl_label = sel_tgl.strftime("%d %B %Y")
             st.markdown(
-                "<div class='card-title'>Kualitas Udara di Jakarta Hari ini "
-                "(Rata-rata)</div>",
+                "<div class='card-title'>Kualitas Udara di Jakarta "
+                f"({tgl_label})</div>",
                 unsafe_allow_html=True,
             )
 
@@ -2066,7 +2169,7 @@ def page_dashboard(data):
                     "gap:8px; font-size:15px; color:#0F172A;'>"
                     + LEAF_ICON_SVG +
                     "<span><strong>Polutan dominan:</strong>&nbsp; "
-                    "PM2.5 (24 µg/m³)</span>"
+                    f"PM2.5 ({dki_today['pm25']} µg/m³)</span>"
                     "</div>",
                     unsafe_allow_html=True,
                 )
@@ -2077,26 +2180,26 @@ def page_dashboard(data):
                              key="btn_info_dashboard", use_container_width=True):
                     render_popup_polutan()
 
-            # 6 polutan compact — SATU markdown call
+            # 6 polutan compact — SATU markdown call (nilai per tanggal terpilih)
             st.markdown(
                 "<div class='pollutant-grid'>"
                 "<div class='pollutant-cell'><div class='pollutant-name'>PM2.5</div>"
-                "<div class='pollutant-value'>24</div>"
+                f"<div class='pollutant-value'>{dki_today['pm25']}</div>"
                 "<div class='pollutant-unit'>µg/m³</div></div>"
                 "<div class='pollutant-cell'><div class='pollutant-name'>PM10</div>"
-                "<div class='pollutant-value'>41</div>"
+                f"<div class='pollutant-value'>{dki_today['pm10']}</div>"
                 "<div class='pollutant-unit'>µg/m³</div></div>"
                 "<div class='pollutant-cell'><div class='pollutant-name'>NO₂</div>"
-                "<div class='pollutant-value'>18</div>"
+                f"<div class='pollutant-value'>{dki_today['no2']}</div>"
                 "<div class='pollutant-unit'>µg/m³</div></div>"
                 "<div class='pollutant-cell'><div class='pollutant-name'>SO₂</div>"
-                "<div class='pollutant-value'>7</div>"
+                f"<div class='pollutant-value'>{dki_today['so2']}</div>"
                 "<div class='pollutant-unit'>µg/m³</div></div>"
                 "<div class='pollutant-cell'><div class='pollutant-name'>CO</div>"
-                "<div class='pollutant-value'>0.6</div>"
+                f"<div class='pollutant-value'>{dki_today['co']}</div>"
                 "<div class='pollutant-unit'>mg/m³</div></div>"
                 "<div class='pollutant-cell'><div class='pollutant-name'>O₃</div>"
-                "<div class='pollutant-value'>50</div>"
+                f"<div class='pollutant-value'>{dki_today['o3']}</div>"
                 "<div class='pollutant-unit'>µg/m³</div></div>"
                 "</div>",
                 unsafe_allow_html=True,
@@ -2131,6 +2234,14 @@ def page_dashboard(data):
                 "<div class='card-title'>Kualitas Udara per Wilayah di Jakarta</div>",
                 unsafe_allow_html=True,
             )
+
+            # Snapshot per wilayah untuk tanggal terpilih (lat/lon dari data
+            # statis; ispu/kategori/polutan dari prediksi XGBoost per tanggal).
+            wil_today = data["wilayah"][["wilayah", "lat", "lon"]].copy()
+            _pred_rows = [predict_wilayah_tanggal(w, sel_tgl.isoformat())
+                          for w in wil_today["wilayah"]]
+            wil_today["ispu"] = [p["ispu"] for p in _pred_rows]
+            wil_today["kategori"] = [p["kategori"] for p in _pred_rows]
 
             # Peta (kiri) + daftar status wilayah & legend (kanan)
             mc1, mc2 = st.columns([1.4, 1], gap="medium")
@@ -2167,7 +2278,7 @@ def page_dashboard(data):
                 display_coords = {"Kep. Seribu": (-6.03, 106.80)}
 
                 bounds = []
-                for _, row in data["wilayah"].iterrows():
+                for _, row in wil_today.iterrows():
                     lat, lon = display_coords.get(
                         row["wilayah"], (row["lat"], row["lon"])
                     )
@@ -2208,7 +2319,7 @@ def page_dashboard(data):
             with mc2:
                 # Daftar status kualitas udara per wilayah (warna sesuai kategori)
                 list_html = "<div style='padding-top:2px;'>"
-                for _, row in data["wilayah"].iterrows():
+                for _, row in wil_today.iterrows():
                     kat_w = row["kategori"]
                     list_html += (
                         "<div style='font-size:14px; color:#64748B; "
@@ -2247,23 +2358,21 @@ def page_dashboard(data):
                 "(7 Hari Mendatang)</div>",
                 unsafe_allow_html=True,
             )
-            pred_dki = data["prediksi"][data["prediksi"]["wilayah"] == "DKI Jakarta"]
             rows_html = ""
-            for _, r in pred_dki.iterrows():
-                kat2 = r["kategori"]
-                warna = KATEGORI_INFO.get(
-                    kat2, KATEGORI_INFO["Sedang"]
-                )["warna"]
-                tanggal = pd.to_datetime(r["tanggal"]).strftime("%d %b %Y")
+            for d in rentang_tanggal(sel_tgl, 1, 7):
+                p = predict_dki_tanggal(d.isoformat())
+                kat2 = p["kategori"]
+                warna = KATEGORI_INFO.get(kat2, KATEGORI_INFO["Sedang"])["warna"]
+                tanggal = d.strftime("%d %b %Y")
                 rows_html += (
                     "<div class='pred-row'>"
                     f"<div class='pred-date'>{tanggal}</div>"
                     "<div>"
                     f"<span class='pred-pill' style='background:{warna};'>"
-                    f"{r['ispu']}</span>"
+                    f"{p['ispu']}</span>"
                     "</div>"
                     f"<div class='pred-cat' style='color:{warna};'>{kat2}</div>"
-                    f"<div class='pred-pm'>PM2.5 ({r['pm25']} µg/m³)</div>"
+                    f"<div class='pred-pm'>PM2.5 ({p['pm25']} µg/m³)</div>"
                     "</div>"
                 )
             st.markdown(rows_html, unsafe_allow_html=True)
@@ -2276,8 +2385,11 @@ def page_dashboard(data):
                 unsafe_allow_html=True,
             )
 
-            df_tren = data["ispu"].copy()
-            df_tren["tanggal"] = pd.to_datetime(df_tren["tanggal"])
+            _tgl_tren = rentang_tanggal(sel_tgl, -6, 7)  # 7 hari s.d. tanggal terpilih
+            df_tren = pd.DataFrame({
+                "tanggal": [pd.Timestamp(d) for d in _tgl_tren],
+                "ispu": [predict_dki_tanggal(d.isoformat())["ispu"] for d in _tgl_tren],
+            })
             df_tren["label_x"] = df_tren["tanggal"].dt.strftime("%d %b")
 
             fig = go.Figure()
@@ -2407,14 +2519,7 @@ def page_detail_wilayah(data):
             unsafe_allow_html=True,
         )
     with head2:
-        st.markdown(
-            "<div style='display:flex; justify-content:flex-end; padding-top:6px;'>"
-            "<div class='updated-card'>"
-            "<div class='updated-card-label'>📅 Data terakhir diperbarui</div>"
-            "<div class='updated-card-value'>15 Juni 2024, 10:00 WIB</div>"
-            "</div></div>",
-            unsafe_allow_html=True,
-        )
+        sel_tgl = render_date_picker()
 
     # Tabs wilayah
     wilayah_list = data["wilayah"]["wilayah"].tolist()
@@ -2451,7 +2556,7 @@ def page_detail_wilayah(data):
                 render_empty_state_wilayah(wilayah)
                 continue
 
-            row = data["wilayah"][data["wilayah"]["wilayah"] == wilayah].iloc[0]
+            row = predict_wilayah_tanggal(wilayah, sel_tgl.isoformat())
             kat = row["kategori"]
             info = KATEGORI_INFO[kat]
 
@@ -2460,7 +2565,8 @@ def page_detail_wilayah(data):
             # Rekomendasi Aktivitas berupa gambar PNG dari assets sesuai kategori.
             with st.container(border=True):
                 st.markdown(
-                    f"<div class='card-title'>Kualitas Udara {wilayah}</div>",
+                    f"<div class='card-title'>Kualitas Udara {wilayah} "
+                    f"({sel_tgl.strftime('%d %B %Y')})</div>",
                     unsafe_allow_html=True,
                 )
 
@@ -2555,16 +2661,17 @@ def page_detail_wilayah(data):
                     )
                     pred_w = data["prediksi"][data["prediksi"]["wilayah"] == wilayah]
                     rows_html = ""
-                    for _, r in pred_w.iterrows():
-                        kat2 = r["kategori"]
+                    for d in rentang_tanggal(sel_tgl, 1, 7):
+                        p = predict_wilayah_tanggal(wilayah, d.isoformat())
+                        kat2 = p["kategori"]
                         warna = KATEGORI_INFO.get(kat2, KATEGORI_INFO["Sedang"])["warna"]
-                        tanggal = pd.to_datetime(r["tanggal"]).strftime("%d %b %Y")
+                        tanggal = d.strftime("%d %b %Y")
                         rows_html += f"""
                         <div class='pred-row'>
                             <div class='pred-date'>{tanggal}</div>
-                            <div><span class='pred-pill' style='background:{warna};'>{r["ispu"]}</span></div>
+                            <div><span class='pred-pill' style='background:{warna};'>{p["ispu"]}</span></div>
                             <div class='pred-cat' style='color:{warna};'>{kat2}</div>
-                            <div class='pred-pm'>PM2.5 ({r["pm25"]} µg/m³)</div>
+                            <div class='pred-pm'>PM2.5 ({p["pm25"]} µg/m³)</div>
                         </div>
                         """
                     st.markdown(rows_html, unsafe_allow_html=True)
@@ -2577,12 +2684,12 @@ def page_detail_wilayah(data):
                         unsafe_allow_html=True,
                     )
 
-                    df_tren = data["ispu"].copy()
-                    df_tren["tanggal"] = pd.to_datetime(df_tren["tanggal"])
-                    # Tambahkan variasi kecil per wilayah agar tidak monoton
-                    np.random.seed(hash(wilayah) % 1000)
-                    offset = np.random.uniform(-15, 15, len(df_tren))
-                    df_tren["ispu_w"] = (df_tren["ispu"] + offset).clip(20, 250).round().astype(int)
+                    _tgl_tren = rentang_tanggal(sel_tgl, -6, 7)
+                    df_tren = pd.DataFrame({
+                        "tanggal": [pd.Timestamp(d) for d in _tgl_tren],
+                        "ispu_w": [predict_wilayah_tanggal(wilayah, d.isoformat())["ispu"]
+                                   for d in _tgl_tren],
+                    })
                     df_tren["label_x"] = df_tren["tanggal"].dt.strftime("%d %b")
 
                     fig = go.Figure()
