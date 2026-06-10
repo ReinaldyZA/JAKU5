@@ -3383,9 +3383,7 @@ def page_edukasi(data):
             st.markdown(
                 "<div class='info-card'>"
                 "<span class='info-icon'>ℹ️</span>"
-                "<span>Data bersifat <b>ilustratif</b>, bukan kondisi realtime. "
-                "Angka estimasi merujuk pada kajian umum sumber polusi udara perkotaan "
-                "dan dapat berbeda dengan kondisi aktual Jakarta.</span>"
+                "<span>Data bersifat <b>ilustratif</b>, bukan kondisi realtime.</span>"
                 "</div>",
                 unsafe_allow_html=True,
             )
