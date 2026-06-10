@@ -1184,11 +1184,11 @@ def load_data():
 2025-10-31,69
 """
     wilayah_csv = """wilayah,ispu,kategori,lat,lon,pm25,pm10,no2,so2,co,o3
-Jakarta Pusat,74,Sedang,-6.1924,106.8232,73,49,35,26,18.6,19
-Jakarta Utara,75,Sedang,-6.1565,106.9056,74,53,22,47,13.8,20
-Jakarta Barat,77,Sedang,-6.1881,106.7567,77,40,20,28,15.0,40
-Jakarta Selatan,73,Sedang,-6.2615,106.8106,69,47,43,48,12.3,18
-Jakarta Timur,72,Sedang,-6.225,106.9004,69,59,17,32,16.7,22
+Jakarta Pusat,71,Sedang,-6.1924,106.8232,68,49,35,26,18.6,19
+Jakarta Utara,65,Sedang,-6.1565,106.9056,62,53,22,47,13.8,20
+Jakarta Barat,102,Tidak Sehat,-6.1881,106.7567,102,60,30,28,15.0,40
+Jakarta Selatan,68,Sedang,-6.2615,106.8106,64,47,43,48,12.3,18
+Jakarta Timur,71,Sedang,-6.225,106.9004,67,59,17,32,16.7,22
 Kep. Seribu,42,Baik,-5.75,106.6,12,22,8,3,0.3,28
 """
     prediksi_csv = """tanggal,wilayah,ispu,kategori,pm25
@@ -1658,8 +1658,7 @@ def render_legend_safe(kategori_info):
             '<div style="display:flex;align-items:center;gap:8px;'
             'margin:7px 0;font-size:13px;color:#334155;">'
             f'<span style="width:11px;height:11px;border-radius:50%;'
-            f'background:{info["warna"]};display:inline-block;flex-shrink:0;'
-            'box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(15,23,42,0.06);"></span>'
+            f'background:{info["warna"]};display:inline-block;flex-shrink:0;"></span>'
             f'<span><strong style="color:#0F172A;font-weight:600;">{nama}</strong> '
             f'({info["rentang"]})</span>'
             '</div>'
@@ -2211,14 +2210,11 @@ def page_dashboard(data):
                 list_html = "<div style='padding-top:2px;'>"
                 for _, row in data["wilayah"].iterrows():
                     kat_w = row["kategori"]
-                    warna = KATEGORI_INFO.get(
-                        kat_w, KATEGORI_INFO["Sedang"]
-                    )["warna"]
                     list_html += (
-                        "<div style='font-size:14px; color:#334155; "
-                        "margin-bottom:7px;'>"
+                        "<div style='font-size:14px; color:#64748B; "
+                        "margin-bottom:9px;'>"
                         f"{row['wilayah']}: "
-                        f"<span style='color:{warna}; font-weight:600;'>"
+                        f"<span style='color:#1E293B; font-weight:700;'>"
                         f"{kat_w}</span></div>"
                     )
                 list_html += "</div>"
