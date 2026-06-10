@@ -170,7 +170,7 @@ def inject_css():
 
     /* Background utama */
     .stApp {
-        background-color: #FAFBFC;
+        background-color: #FFFFFF;
     }
 
     /* Hilangkan top padding default */
@@ -261,7 +261,7 @@ def inject_css():
     }
 
     .sidebar-footer {
-        background-color: #F8FAFC;
+        background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 12px;
         padding: 14px 16px;
@@ -774,7 +774,7 @@ def inject_css():
 
     /* ============ SLIDER MINI-CARDS ============ */
     .slider-card {
-        background: #F8FAFC;
+        background: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 12px;
         padding: 11px 15px 9px;
@@ -819,7 +819,7 @@ def inject_css():
 
     /* ============ HERO RESULT ============ */
     .hero-result {
-        background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
+        background: #FFFFFF;
         border-radius: 16px; padding: 24px 20px 21px;
         border: 1px solid #F1F5F9;
         text-align: center;
@@ -883,7 +883,7 @@ def inject_css():
 
     /* ============ SUB-INDEKS PROGRESS BARS ============ */
     .subindex-section {
-        background: #F8FAFC;
+        background: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 14px;
         padding: 16px 18px 14px;
