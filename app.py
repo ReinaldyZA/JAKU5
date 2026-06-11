@@ -2420,7 +2420,7 @@ def page_dashboard(data):
                     ).add_to(m)
                 if bounds:
                     m.fit_bounds(bounds, padding=(30, 30))
-                st_folium(m, height=300, use_container_width=True,
+                st_folium(m, height=430, use_container_width=True,
                           returned_objects=[])
 
             with mc2:
