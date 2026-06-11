@@ -29,6 +29,7 @@ import plotly.graph_objects as go
 import folium
 from folium.plugins import Fullscreen
 from streamlit_folium import st_folium
+from branca.element import Figure
 from streamlit_option_menu import option_menu
 import joblib
 
@@ -2350,6 +2351,14 @@ def page_dashboard(data):
                 # Peta dengan tile berwarna (CartoDB Voyager) seperti desain.
                 # zoom_control & fullscreen dimatikan agar peta tampil bersih
                 # seperti mockup Figma (drag & scroll-zoom tetap aktif).
+                #
+                # Peta dibungkus folium.Figure dengan tinggi TETAP (MAP_H px).
+                # Tanpa ini, folium memakai kotak aspect-ratio (tinggi = 60%
+                # lebar ≈ 300px) sehingga saat iframe ditinggikan muncul ruang
+                # putih di bawah peta. Dengan Figure ber-tinggi-tetap, Leaflet
+                # langsung di-init pada MAP_H px dan tile mengisi penuh.
+                MAP_H = 430   # ≈ sejajar dengan bawah legend "Berbahaya"
+                fig = Figure(width="100%", height=f"{MAP_H}px")
                 m = folium.Map(
                     location=[-6.17, 106.83],
                     zoom_start=11,
@@ -2360,6 +2369,7 @@ def page_dashboard(data):
                     min_zoom=9,
                     max_zoom=16,
                 )
+                fig.add_child(m)
                 folium.TileLayer(
                     tiles="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
                     attr="&copy; OpenStreetMap contributors &copy; CARTO",
@@ -2420,7 +2430,7 @@ def page_dashboard(data):
                     ).add_to(m)
                 if bounds:
                     m.fit_bounds(bounds, padding=(30, 30))
-                st_folium(m, height=430, use_container_width=True,
+                st_folium(m, height=MAP_H, use_container_width=True,
                           returned_objects=[])
 
             with mc2:
