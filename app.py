@@ -1084,6 +1084,11 @@ def inject_css():
     [class*="st-key-btn_reset"] button:focus,
     [class*="st-key-btn_reset"] button:focus-visible,
     [class*="st-key-btn_reset"] button:active,
+    [class*="st-key-btn_selengkapnya"] button,
+    [class*="st-key-btn_selengkapnya"] button:hover,
+    [class*="st-key-btn_selengkapnya"] button:focus,
+    [class*="st-key-btn_selengkapnya"] button:focus-visible,
+    [class*="st-key-btn_selengkapnya"] button:active,
     div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button,
     div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button:hover,
     div[data-testid="stButton"]:has(button[aria-label*="penjelasan" i]) > button:focus,
@@ -2343,11 +2348,13 @@ def page_dashboard(data):
             mc1, mc2 = st.columns([1.4, 1], gap="medium")
             with mc1:
                 # Peta dengan tile berwarna (CartoDB Voyager) seperti desain.
+                # zoom_control & fullscreen dimatikan agar peta tampil bersih
+                # seperti mockup Figma (drag & scroll-zoom tetap aktif).
                 m = folium.Map(
                     location=[-6.17, 106.83],
                     zoom_start=11,
                     tiles=None,
-                    zoom_control=True,
+                    zoom_control=False,
                     scrollWheelZoom=True,
                     dragging=True,
                     min_zoom=9,
@@ -2360,13 +2367,15 @@ def page_dashboard(data):
                     control=False,
                 ).add_to(m)
 
-                # Tombol maximize/minimize (layar penuh) di pojok kanan atas.
-                Fullscreen(
-                    position="topright",
-                    title="Perbesar peta",
-                    title_cancel="Perkecil peta",
-                    force_separate_button=True,
-                ).add_to(m)
+                # Atribusi tile dibuat kecil & samar agar tidak mengganggu
+                # tampilan (mockup Figma tidak menampilkannya), namun tetap ada
+                # demi mematuhi syarat penggunaan OpenStreetMap/CARTO.
+                m.get_root().html.add_child(folium.Element(
+                    "<style>.leaflet-control-attribution{"
+                    "font-size:8px!important;opacity:.45!important;"
+                    "background:rgba(255,255,255,.6)!important;"
+                    "padding:0 4px!important;}</style>"
+                ))
 
                 # Koordinat tampilan: Kep. Seribu (lokasi asli jauh di utara,
                 # ~-5.75) digeser ke area teluk utara Jakarta agar lingkarannya
@@ -2394,7 +2403,7 @@ def page_dashboard(data):
                         fill=True,
                         fillColor=warna,
                         fillOpacity=0.95,
-                        tooltip=f"{row['wilayah']}: {row['ispu']} ({kat_w})",
+                        tooltip=f"{row['wilayah']}: {int(round(row['ispu']))} ({kat_w})",
                     ).add_to(m)
                     # Label skor ISPU di tengah lingkaran
                     folium.map.Marker(
@@ -2405,7 +2414,7 @@ def page_dashboard(data):
                             html=(
                                 "<div style='font-size:12px; font-weight:800; "
                                 "color:white; text-align:center; "
-                                f"line-height:36px;'>{row['ispu']}</div>"
+                                f"line-height:36px;'>{int(round(row['ispu']))}</div>"
                             ),
                         ),
                     ).add_to(m)
