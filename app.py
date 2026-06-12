@@ -2869,7 +2869,7 @@ def page_detail_wilayah(data):
 
                     st.markdown(
                         f"""
-                        <div class='pollutant-grid'>
+                        <div class='pollutant-grid' style='margin-bottom:16px;'>
                           <div class='pollutant-cell'><div class='pollutant-name'>PM2.5</div><div class='pollutant-value'>{row["pm25"]}</div><div class='pollutant-unit'>µg/m³</div></div>
                           <div class='pollutant-cell'><div class='pollutant-name'>PM10</div><div class='pollutant-value'>{row["pm10"]}</div><div class='pollutant-unit'>µg/m³</div></div>
                           <div class='pollutant-cell'><div class='pollutant-name'>NO₂</div><div class='pollutant-value'>{row["no2"]}</div><div class='pollutant-unit'>µg/m³</div></div>
