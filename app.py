@@ -80,14 +80,14 @@ KATEGORI_INFO = {
         "rekomendasi": "Cocok untuk olahraga, jalan kaki, dan aktivitas outdoor lainnya. Nikmati udara segar dan tetap jaga pola hidup sehat."
     },
     "Sedang": {
-        "warna": "#2563EB", "warna_bg": "#DBEAFE", "emoji": "😐",
+        "warna": "#4A6CF7", "warna_bg": "#DBEAFE", "emoji": "😐",
         "rentang": "51-100",
         "deskripsi": "Masih dapat diterima untuk beraktivitas di luar ruangan.",
         "rekom_emoji": "🚶",
         "rekomendasi": "Cocok untuk olahraga ringan dan aktivitas harian. Gunakan masker jika sensitif terhadap polusi dan hindari paparan terlalu lama."
     },
     "Tidak Sehat": {
-        "warna": "#F59E0B", "warna_bg": "#FEF3C7", "emoji": "😷",
+        "warna": "#E5B93D", "warna_bg": "#FEF3C7", "emoji": "😷",
         "rentang": "101-200",
         "deskripsi": "Kurangi aktivitas luar ruangan, terutama bagi kelompok sensitif.",
         "rekom_emoji": "⚠️",
@@ -370,7 +370,7 @@ def inject_css():
        Keduanya distyle supaya sudut membulat & ada border halus. */
     iframe[title="streamlit_folium.st_folium"],
     iframe[srcdoc] {
-        border-radius: 12px;
+        border-radius: 16px;
         border: 1px solid #EEF2F7;
     }
 
@@ -1121,6 +1121,24 @@ def inject_css():
         display: flex !important;
         justify-content: flex-end !important;
         width: 100%;
+    }
+
+    /* Tombol "Lihat Selengkapnya" (di bawah peta) — rounded pill, border
+       biru tipis, latar putih, padding besar seperti desain Figma. */
+    [class*="st-key-btn_selengkapnya"] button,
+    [class*="st-key-btn_selengkapnya"] button:hover,
+    [class*="st-key-btn_selengkapnya"] button:focus,
+    [class*="st-key-btn_selengkapnya"] button:focus-visible,
+    [class*="st-key-btn_selengkapnya"] button:active {
+        background: #FFFFFF !important;
+        color: #4A6CF7 !important;
+        border: 1.5px solid #4A6CF7 !important;
+        border-radius: 999px !important;
+        padding: 11px 30px !important;
+        font-weight: 600 !important;
+        box-shadow: none !important;
+        transform: none !important;
+        transition: none !important;
     }
 
     /* ============ SLIDER ============ */
@@ -2162,7 +2180,7 @@ def page_dashboard(data):
     # Cara CSS equal-height tidak andal lintas versi Streamlit, jadi dipakai
     # tinggi tetap. >>> Kalau ada kartu yang muncul scrollbar di dalamnya,
     # NAIKKAN angkanya; kalau terlalu banyak ruang kosong, TURUNKAN. <<<
-    DASH_ROW1_H = 580   # baris 1: "Kualitas Udara hari ini" & "per Wilayah"
+    DASH_ROW1_H = 620   # baris 1: "Kualitas Udara hari ini" & "per Wilayah"
     DASH_ROW2_H = 440   # baris 2: "Prediksi ISPU" & "Tren ISPU"
     col_left, col_right = st.columns([1.18, 1], gap="medium")
 
@@ -2344,8 +2362,12 @@ def page_dashboard(data):
             wil_today["kategori"] = wil_today["wilayah"].map(
                 lambda w: _pred[w]["kategori"] if _pred[w] else None)
 
-            # Peta (kiri) + daftar status wilayah & legend (kanan)
-            mc1, mc2 = st.columns([1.4, 1], gap="medium")
+            # Peta (kiri ~65%) + daftar status wilayah & legend (kanan ~35%)
+            # MAP_H dipakai bersama: tinggi peta DAN tinggi kotak kolom kanan
+            # dibuat sama persis supaya kedua kolom sejajar vertikal & tidak
+            # ada whitespace di bawah (figma: tinggi peta ~420-450px).
+            MAP_H = 450
+            mc1, mc2 = st.columns([1.85, 1], gap="medium")
             with mc1:
                 # Peta dengan tile berwarna (CartoDB Voyager) seperti desain.
                 m = folium.Map(
@@ -2417,44 +2439,72 @@ def page_dashboard(data):
                 if bounds:
                     m.fit_bounds(bounds, padding=(30, 30))
                 # PENTING: st_folium + use_container_width membuat tinggi tile
-                # leaflet mengikuti RASIO ASPEK lebar kolom (±60% × lebar ≈
-                # 300px), BUKAN parameter height -> menyisakan ruang putih di
-                # bawah frame. Solusinya: bungkus map ke branca.Figure dengan
-                # tinggi tetap (px) lalu render via components.html. Karena
-                # html/body figure ber-height:100%, tile leaflet mengisi PENUH
-                # tinggi frame. MAP_H disetel agar tepi bawah peta sejajar
-                # dengan item legend "Berbahaya (>301)" di kolom kanan.
-                MAP_H = 372
+                # leaflet mengikuti RASIO ASPEK lebar kolom, BUKAN parameter
+                # height -> menyisakan ruang putih di bawah frame. Solusinya:
+                # bungkus map ke branca.Figure dengan tinggi tetap (px) lalu
+                # render via components.html. Karena html/body figure
+                # ber-height:100%, tile leaflet mengisi PENUH tinggi frame.
                 fig = Figure(width="100%", height=f"{MAP_H}px")
                 fig.add_child(m)
                 components.html(fig.render(), height=MAP_H, scrolling=False)
 
             with mc2:
-                # Daftar status kualitas udara per wilayah (warna sesuai kategori)
-                list_html = "<div style='padding-top:2px;'>"
+                # Kolom kanan dibuat SATU kotak flex setinggi peta (MAP_H).
+                # Daftar wilayah di atas (didorong sedikit ke bawah via
+                # padding-top), legend "Keterangan" di-push ke bawah dengan
+                # margin-top:auto -> mengisi penuh & menghilangkan whitespace
+                # bawah, tepi bawah legend sejajar dengan tepi bawah peta.
+
+                # Baris daftar wilayah: nama abu gelap, status bold berwarna
+                # sesuai kategori.
+                rows_html = ""
                 for _, row in wil_today.iterrows():
                     if row["ada"]:
-                        nilai_html = (
-                            f"<span style='color:#1E293B; font-weight:700;'>"
+                        c = KATEGORI_INFO.get(
+                            row["kategori"], KATEGORI_INFO["Sedang"]
+                        )["warna"]
+                        status_html = (
+                            f"<span style='color:{c};font-weight:700;'>"
                             f"{row['kategori']}</span>"
                         )
                     else:
-                        nilai_html = (
-                            "<span style='color:#94A3B8; font-weight:600; "
+                        status_html = (
+                            "<span style='color:#94A3B8;font-weight:600;"
                             "font-style:italic;'>Tidak ada data</span>"
                         )
-                    list_html += (
-                        "<div style='font-size:14px; color:#64748B; "
-                        "margin-bottom:9px;'>"
-                        f"{row['wilayah']}: {nilai_html}</div>"
+                    rows_html += (
+                        "<div style='font-size:15px;color:#475569;"
+                        "line-height:1.4;margin-bottom:10px;'>"
+                        f"{row['wilayah']}: {status_html}</div>"
                     )
-                list_html += "</div>"
-                st.markdown(list_html, unsafe_allow_html=True)
 
-                st.markdown("<div style='margin-top:8px;'></div>",
-                            unsafe_allow_html=True)
-                # Legend kategori (Keterangan:)
-                render_legend_safe(KATEGORI_INFO)
+                # Legend kategori (vertikal, bulatan warna kiri, nama bold).
+                leg_rows = ""
+                for nama, info in KATEGORI_INFO.items():
+                    leg_rows += (
+                        "<div style='display:flex;align-items:center;gap:10px;"
+                        "margin:7px 0;font-size:15px;color:#334155;'>"
+                        "<span style='width:13px;height:13px;border-radius:50%;"
+                        f"background:{info['warna']};display:inline-block;"
+                        "flex-shrink:0;'></span>"
+                        "<span><strong style='color:#0F172A;font-weight:700;'>"
+                        f"{nama}</strong> ({info['rentang']})</span>"
+                        "</div>"
+                    )
+
+                mc2_html = (
+                    f"<div style='height:{MAP_H}px;display:flex;"
+                    "flex-direction:column;padding-top:24px;"
+                    "box-sizing:border-box;'>"
+                    f"<div>{rows_html}</div>"
+                    "<div style='margin-top:auto;'>"
+                    "<div style='font-weight:700;font-size:16px;color:#0F172A;"
+                    "margin-bottom:14px;'>Keterangan:</div>"
+                    f"{leg_rows}"
+                    "</div>"
+                    "</div>"
+                )
+                st.markdown(mc2_html, unsafe_allow_html=True)
 
             # Tombol "Lihat Selengkapnya" di bawah peta (outline pill, kiri,
             # auto-width agar kompak seperti desain Figma).
