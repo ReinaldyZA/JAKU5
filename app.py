@@ -2144,7 +2144,7 @@ def render_sidebar():
             )
             st.markdown(
                 f'<div style="padding:8px 16px 0 16px; text-align:center;">{raw_svg}</div>'
-                '<div style="height:18px;"></div>',
+                '<div style="height:70px;"></div>',
                 unsafe_allow_html=True,
             )
         else:
@@ -2159,7 +2159,7 @@ def render_sidebar():
                     </span>
                 </div>
                 <div class='sidebar-subtitle'>Pantau Udara, Jaga Jakarta</div>
-                <div style="height:18px;"></div>
+                <div style="height:70px;"></div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -2182,6 +2182,10 @@ def render_sidebar():
         # CSS statis: gaya nav-link + ikon SVG per item (mask).
         css = "<style>"
         css += (
+            # Jarak antar item menu (spasi ganda ala Word). Override
+            # element-container margin-bottom:0 khusus item nav.
+            'section[data-testid="stSidebar"] [class*="st-key-nav"]{'
+            'margin-bottom:16px !important;}'
             'section[data-testid="stSidebar"] [class*="st-key-nav"] button{'
             'justify-content:flex-start !important;text-align:left;width:100%;'
             'background:#FFFFFF !important;border:none !important;box-shadow:none !important;'
