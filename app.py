@@ -3341,19 +3341,18 @@ def page_edukasi(data):
     st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
-    # Section 2: Dampak Kesehatan + Sumber Polusi (2 kolom)
+    # Section 2: Dampak Kesehatan + Sumber Polusi (2 kolom, equal-height)
+    # Kedua card diberi tinggi tetap SAMA (EDU_CARD_H) -> tinggi presisi
+    # sejajar. Card kiri (Dampak) isinya sedikit, jadi diisi penuh dengan
+    # grid 2x2 yang ROW-nya stretch (1fr 1fr) + konten tiap sel di-center,
+    # sehingga ruang terisi merata tanpa whitespace besar di bawah.
     # ============================================================
-    try:
-        dc1, dc2 = st.columns([1.4, 1], gap="medium", vertical_alignment="bottom")
-    except TypeError:
-        dc1, dc2 = st.columns([1.4, 1], gap="medium")
+    EDU_CARD_H = 460
+    dc1, dc2 = st.columns([1.4, 1], gap="medium")
 
     # --- Dampak Kesehatan ---
     with dc1:
-        with st.container(border=True):
-            # Dirender sebagai HTML (bukan SVG) supaya wording mudah diperbarui.
-            # Layout meniru desain Figma: judul + grid 2 kolom berisi 4 dampak,
-            # tiap item = ikon emoji dalam lingkaran + judul + deskripsi.
+        with st.container(border=True, height=EDU_CARD_H):
             dampak_items = [
                 ("🫁", "Saluran Pernapasan",
                  "Polusi udara dapat menyebabkan iritasi, batuk, sesak napas, "
@@ -3371,35 +3370,44 @@ def page_edukasi(data):
             cells = ""
             for _emoji, _judul, _desc in dampak_items:
                 cells += (
+                    # sel grid (stretch) -> item di-center vertikal agar penuh
+                    "<div style='display:flex; align-items:center;'>"
                     "<div style='display:flex; gap:14px; align-items:flex-start;'>"
-                    "<div style='flex-shrink:0; width:44px; height:44px; "
+                    "<div style='flex-shrink:0; width:48px; height:48px; "
                     "border-radius:999px; background:#F1F5F9; display:flex; "
-                    "align-items:center; justify-content:center; font-size:20px; "
+                    "align-items:center; justify-content:center; font-size:22px; "
                     f"line-height:1;'>{_emoji}</div>"
                     "<div>"
                     "<div style='font-weight:700; color:#111827; font-size:16px; "
-                    f"margin-bottom:4px;'>{_judul}</div>"
+                    f"margin-bottom:5px;'>{_judul}</div>"
                     "<div style='font-size:14px; color:#475569; "
-                    f"line-height:1.5;'>{_desc}</div>"
+                    f"line-height:1.55;'>{_desc}</div>"
+                    "</div>"
                     "</div>"
                     "</div>"
                 )
             dampak_html = (
+                # tinggi dalam = EDU_CARD_H - padding wrapper (20px atas+bawah)
+                f"<div style='height:{EDU_CARD_H - 40}px; display:flex; "
+                "flex-direction:column;'>"
                 "<div style='font-weight:700; color:#111827; font-size:18px; "
-                "margin-bottom:18px;'>Dampak Kualitas Udara terhadap Kesehatan</div>"
+                "margin-bottom:6px;'>Dampak Kualitas Udara terhadap "
+                "Kesehatan</div>"
                 "<div style='display:grid; grid-template-columns:1fr 1fr; "
-                f"gap:22px 28px;'>{cells}</div>"
+                "grid-template-rows:1fr 1fr; gap:18px 30px; flex:1;'>"
+                f"{cells}</div>"
+                "</div>"
             )
             st.markdown(dampak_html, unsafe_allow_html=True)
 
     # --- Sumber Polusi (donut chart) ---
     with dc2:
-        with st.container(border=True):
+        with st.container(border=True, height=EDU_CARD_H):
             st.markdown(
-                "<div class='card-title'>Sumber Polusi Udara di Jakarta</div>"
-                "<div style='font-size:14px; color:#475569; margin-bottom:10px; line-height:1.5;'>"
-                "Estimasi kontribusi tiap sektor."
-                "</div>",
+                "<div style='font-weight:700; color:#111827; font-size:18px; "
+                "margin-bottom:6px;'>Sumber Polusi Udara di Jakarta</div>"
+                "<div style='font-size:14px; color:#475569; margin-bottom:8px; "
+                "line-height:1.5;'>Estimasi kontribusi tiap sektor.</div>",
                 unsafe_allow_html=True,
             )
 
@@ -3421,7 +3429,7 @@ def page_edukasi(data):
                 hovertemplate="<b>%{label}</b><br>%{value}%<extra></extra>",
             ))
             fig.update_layout(
-                height=200,
+                height=220,
                 margin=dict(l=0, r=0, t=0, b=0),
                 showlegend=False,
                 paper_bgcolor="rgba(0,0,0,0)",
@@ -3463,7 +3471,6 @@ def page_edukasi(data):
                 "</div>",
                 unsafe_allow_html=True,
             )
-            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
