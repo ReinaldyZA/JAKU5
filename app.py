@@ -52,6 +52,18 @@ DATA_DIR = BASE_DIR / "data"
 MODELS_DIR = BASE_DIR / "models"
 ASSETS_DIR = BASE_DIR / "assets"
 
+# ----------------------------------------------------------------
+# LEBAR KONTEN TETAP (kunci tampilan agar konsisten di semua zoom)
+# Konten dikunci ke lebar px tetap & dibuat rata-tengah, sehingga
+# layout di zoom 50%-100% identik (tidak meregang/menyempit).
+#
+# Cara setel: angka ini sebaiknya <= lebar konten yang tersedia saat
+# zoom 100% di monitormu (kalau kebesaran -> muncul scroll horizontal
+# di zoom 100%). 1366 aman untuk mayoritas laptop/monitor. Naikkan
+# (mis. 1500) kalau monitor besar & ingin tampilan selebar zoom 80%.
+# ----------------------------------------------------------------
+CONTENT_MAX_WIDTH = 1366
+
 def _leaf_icon_svg() -> str:
     """Baca assets/leaf.svg dan kembalikan inline SVG berukuran kecil (~16px),
     dijadikan SATU BARIS agar tidak memicu salah-render Markdown Streamlit
@@ -178,11 +190,12 @@ def inject_css():
         background-color: #FFFFFF;
     }
 
-    /* Hilangkan top padding default */
+    /* Hilangkan top padding default.
+       (max-width konten diatur terpisah lewat inject_layout_lock()
+        agar layout konsisten di semua level zoom) */
     .block-container {
         padding-top: 24px !important;
         padding-bottom: 48px !important;
-        max-width: 100% !important;
     }
 
     /* Hilangkan header & footer Streamlit */
@@ -3699,8 +3712,44 @@ def page_edukasi(data):
 # ================================================================
 # MAIN ROUTER
 # ================================================================
+def inject_layout_lock():
+    """Kunci lebar area konten ke nilai px tetap & rata-tengah.
+
+    Ini membuat layout konsisten dari zoom 50% s/d 100%: karena lebar
+    konten tidak lagi mengikuti lebar viewport (yang berubah saat zoom),
+    susunan kolom/kartu jadi identik di semua level zoom. Yang berubah
+    hanya ukuran fisik di layar — itu memang perilaku zoom yang wajar.
+    """
+    st.markdown(
+        f"""
+        <style>
+        /* Kunci lebar konten utama + rata-tengah.
+           Pakai max-width: konten TIDAK pernah melebihi nilai ini & tidak
+           ada scroll horizontal. Kalau di zoom 100% masih terlihat menyempit
+           (viewport monitor lebih kecil dari nilai ini), pilih salah satu:
+             1) turunkan CONTENT_MAX_WIDTH, atau
+             2) ganti 'max-width' di bawah jadi 'width' (kunci keras /
+                hard-lock; identik di semua zoom, tapi bisa muncul scroll
+                horizontal kalau tidak muat di zoom 100%). */
+        .stApp .block-container {{
+            max-width: {CONTENT_MAX_WIDTH}px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }}
+        /* Cegah kolom Streamlit reflow/stacking saat viewport melebar/menyempit
+           — pertahankan rasio kolom apa adanya di semua zoom */
+        .stApp [data-testid="stHorizontalBlock"] {{
+            flex-wrap: nowrap !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def main():
     inject_css()
+    inject_layout_lock()
     data = load_data()
 
     # Handle redirect dari tombol "Lihat Selengkapnya" di dashboard.
