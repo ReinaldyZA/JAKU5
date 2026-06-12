@@ -412,6 +412,43 @@ def inject_css():
         background: #F1F5F9 !important;
     }
 
+    /* ============ DATE PICKER "Pilih Tanggal" ============
+       Dibuat lebih besar & menonjol supaya mudah di-notice user
+       (dipakai di Dashboard & Detail Wilayah). */
+    [data-testid="stDateInput"] input {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #0F172A !important;
+        padding-top: 11px !important;
+        padding-bottom: 11px !important;
+    }
+    /* Kotak input: border aksen biru, rounded, shadow lembut */
+    [data-testid="stDateInput"] [data-baseweb="input"],
+    [data-testid="stDateInput"] [data-baseweb="base-input"],
+    [data-testid="stDateInput"] > div > div {
+        border-radius: 12px !important;
+        border: 1.5px solid #C7D2FE !important;
+        background: #FFFFFF !important;
+        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.08) !important;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease !important;
+    }
+    [data-testid="stDateInput"] [data-baseweb="input"]:hover,
+    [data-testid="stDateInput"] > div > div:hover {
+        border-color: #4A6CF7 !important;
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.16) !important;
+    }
+    [data-testid="stDateInput"] [data-baseweb="input"]:focus-within,
+    [data-testid="stDateInput"] > div > div:focus-within {
+        border-color: #4A6CF7 !important;
+        box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.18) !important;
+    }
+    /* Ikon kalender bawaan baseweb -> biru aksen */
+    [data-testid="stDateInput"] svg {
+        fill: #4A6CF7 !important;
+        width: 20px !important;
+        height: 20px !important;
+    }
+
     /* Map container — rounded corners untuk iframe folium.
        st_folium pakai title khusus; components.html (Figure) pakai srcdoc.
        Keduanya distyle supaya sudut membulat & ada border halus. */
@@ -2015,8 +2052,9 @@ def render_date_picker():
     lo, hi = rentang_data()
     get_selected_date()  # pastikan ter-inisialisasi & diklamp
     st.markdown(
-        "<div class='updated-card-label' style='text-align:right; "
-        "margin-bottom:2px;'>📅 Pilih Tanggal</div>",
+        "<div style='text-align:right; font-size:15px; font-weight:700; "
+        "color:#4A6CF7; margin-bottom:6px; letter-spacing:0.01em;'>"
+        "📅 Pilih Tanggal</div>",
         unsafe_allow_html=True,
     )
     return st.date_input(
