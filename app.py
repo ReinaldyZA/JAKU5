@@ -3468,14 +3468,95 @@ def page_edukasi(data):
     st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
     # ============================================================
-    # Section 3: Tips Kesehatan
+    # Section 3: Tips Kesehatan — dibangun ulang sebagai HTML NATIVE.
+    # Sebelumnya: 1 SVG besar (jaga_kesehatan.svg) — SVG itu menggambar
+    # outer-rect ber-stroke sendiri — DI DALAM st.container(border=True),
+    # sehingga border bertumpuk ("kotak di dalam kotak").
+    # Sekarang: SATU <div> container ber-border (outline tunggal) berisi
+    # judul + 5 kartu (flex). Tiap kartu punya border tipisnya sendiri.
+    # Tidak ada st.container / kolom Streamlit -> tidak ada border ganda.
     # ============================================================
-    with st.container(border=True):
-        # Judul & subjudul sudah termuat di dalam SVG, jadi tidak perlu header terpisah.
-        # 5 kartu tips = SVG desain Figma (assets/jaga_kesehatan.svg).
-        tips_svg = svg_inline("jaga_kesehatan.svg")
-        if tips_svg:
-            st.markdown(tips_svg, unsafe_allow_html=True)
+    TIPS_ICONS = {
+        "mask": (
+            "<svg width='30' height='30' viewBox='0 0 24 24' fill='none' "
+            "stroke='currentColor' stroke-width='1.8' stroke-linecap='round' "
+            "stroke-linejoin='round'>"
+            "<path d='M5 9h14v3a5 5 0 0 1-5 5h-4a5 5 0 0 1-5-5V9z'/>"
+            "<path d='M5 11H2M19 11h3'/><path d='M9 11h6M9.5 14h5'/></svg>"
+        ),
+        "ban": (
+            "<svg width='30' height='30' viewBox='0 0 24 24'>"
+            "<circle cx='12' cy='12' r='11' fill='#2563EB'/>"
+            "<path d='M8.5 8.5l7 7M15.5 8.5l-7 7' stroke='#fff' "
+            "stroke-width='2' stroke-linecap='round'/></svg>"
+        ),
+        "wind": (
+            "<svg width='30' height='30' viewBox='0 0 24 24' fill='none' "
+            "stroke='currentColor' stroke-width='1.8' stroke-linecap='round' "
+            "stroke-linejoin='round'>"
+            "<path d='M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2'/>"
+            "<path d='M9.6 4.6A2 2 0 1 1 11 8H2'/>"
+            "<path d='M12.6 19.4A2 2 0 1 0 14 16H2'/></svg>"
+        ),
+        "droplet": (
+            "<svg width='30' height='30' viewBox='0 0 24 24' fill='none' "
+            "stroke='currentColor' stroke-width='1.8' stroke-linecap='round' "
+            "stroke-linejoin='round'>"
+            "<path d='M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5"
+            "c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z'/></svg>"
+        ),
+        "purifier": (
+            "<svg width='30' height='30' viewBox='0 0 24 24' fill='none' "
+            "stroke='currentColor' stroke-width='1.8' stroke-linecap='round' "
+            "stroke-linejoin='round'>"
+            "<rect x='4' y='4' width='9' height='16' rx='2'/>"
+            "<path d='M7 8h3M7 11h3'/>"
+            "<path d='M16 9a4 4 0 0 1 0 6'/><path d='M18.5 7a7 7 0 0 1 0 10'/>"
+            "</svg>"
+        ),
+    }
+    tips_data = [
+        ("mask", "Gunakan Masker",
+         "Gunakan masker berstandar untuk mengurangi paparan polusi udara."),
+        ("ban", "Kurangi Aktivitas di Luar Ruangan",
+         "Kurangi aktivitas fisik berat di luar ruangan, terutama saat sore "
+         "hingga malam hari."),
+        ("wind", "Jaga Kualitas Udara Dalam Ruangan",
+         "Tutup jendela saat polusi tinggi dan pastikan ventilasi rumah tetap "
+         "berfungsi baik."),
+        ("droplet", "Perbanyak Minum Air",
+         "Membantu menjaga kenyamanan saluran pernapasan saat kualitas udara "
+         "memburuk."),
+        ("purifier", "Gunakan Air Purifier",
+         "Jika memungkinkan, gunakan alat penyaring udara di dalam ruangan "
+         "untuk udara lebih bersih."),
+    ]
+    tips_cards = ""
+    for _key, _judul, _desc in tips_data:
+        tips_cards += (
+            "<div style='flex:1 1 0;min-width:0;border:1px solid #E5E7EB;"
+            "border-radius:14px;background:#fff;padding:24px;display:flex;"
+            "flex-direction:column;'>"
+            "<div style='color:#2563EB;margin-bottom:16px;line-height:0;'>"
+            f"{TIPS_ICONS[_key]}</div>"
+            "<div style='font-size:17px;font-weight:700;color:#0F172A;"
+            f"line-height:1.3;margin-bottom:10px;'>{_judul}</div>"
+            "<div style='font-size:14px;color:#64748B;line-height:1.6;'>"
+            f"{_desc}</div>"
+            "</div>"
+        )
+    tips_html = (
+        "<div style='border:1px solid #E5E7EB;border-radius:16px;"
+        "background:#fff;padding:30px;margin-top:4px;'>"
+        "<div style='display:flex;align-items:center;gap:10px;font-size:22px;"
+        "font-weight:700;color:#0F172A;margin-bottom:24px;'>"
+        "<span style='font-size:22px;line-height:1;'>💡</span>"
+        "Tips Menjaga Kesehatan Saat Kualitas Udara Tidak Sehat</div>"
+        "<div style='display:flex;align-items:stretch;gap:20px;'>"
+        f"{tips_cards}</div>"
+        "</div>"
+    )
+    st.markdown(tips_html, unsafe_allow_html=True)
 
 
 # ================================================================
