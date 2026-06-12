@@ -2411,7 +2411,10 @@ def page_dashboard(data):
                     ).add_to(m)
                 if bounds:
                     m.fit_bounds(bounds, padding=(30, 30))
-                st_folium(m, height=300, use_container_width=True,
+                # Tinggi peta disamakan dengan kolom kanan (daftar status +
+                # legend) supaya tepi bawah peta sejajar dengan item legend
+                # "Berbahaya (>301)", persis seperti desain Figma.
+                st_folium(m, height=390, use_container_width=True,
                           returned_objects=[])
 
             with mc2:
