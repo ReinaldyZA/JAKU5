@@ -3187,8 +3187,10 @@ def page_simulasi(data):
     # ── Init state (idempoten) ──
     _sim_init_state()
 
-    # Layout: kiri lebih lebar untuk input, kanan untuk hasil. Gap besar.
-    col_left, col_right = st.columns([1.15, 1], gap="large")
+    # Layout 2 kolom: kiri (Komposisi Polutan) ~59%, kanan (Hasil Prediksi)
+    # ~41%. Gap dikecilkan dari "large" -> "medium" supaya kedua card lebih
+    # rapat (tidak ada jarak kosong besar di tengah) namun tetap ada pemisah.
+    col_left, col_right = st.columns([1.45, 1], gap="medium")
 
     # Mapping nama preset → suffix CSS class supaya warna pill sesuai kategori
     preset_css_suffix = {
@@ -3385,7 +3387,7 @@ def page_simulasi(data):
                 st.markdown(
                     f"""
                     <div style="background:{rekom_bg}; border:1.5px solid {rekom_border};
-                                border-radius:16px; padding:18px 20px; margin-top:18px;">
+                                border-radius:14px; padding:18px 20px; margin-top:18px;">
                         <div style="font-size:18px; font-weight:700; color:{rekom_color};
                                     margin-bottom:10px;">
                             Rekomendasi Aktivitas
@@ -3398,6 +3400,10 @@ def page_simulasi(data):
                     """,
                     unsafe_allow_html=True,
                 )
+
+            # Ruang napas di bawah Rekomendasi Aktivitas supaya tidak menempel
+            # ke tepi bawah card (sesuai desain Figma).
+            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
 
             # Kartu Hasil Prediksi ISPU berakhir di kotak Rekomendasi Aktivitas
             # (mengikuti mockup Figma). Bagian Sub-Indeks per Polutan & pembanding
