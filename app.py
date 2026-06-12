@@ -422,23 +422,27 @@ def inject_css():
         padding-top: 11px !important;
         padding-bottom: 11px !important;
     }
-    /* Kotak input: border aksen biru, rounded, shadow lembut */
-    [data-testid="stDateInput"] [data-baseweb="input"],
-    [data-testid="stDateInput"] [data-baseweb="base-input"],
-    [data-testid="stDateInput"] > div > div {
+    /* SATU outline saja: border + shadow hanya di kotak terluar baseweb. */
+    [data-testid="stDateInput"] [data-baseweb="input"] {
         border-radius: 12px !important;
         border: 1.5px solid #C7D2FE !important;
         background: #FFFFFF !important;
         box-shadow: 0 2px 10px rgba(37, 99, 235, 0.08) !important;
         transition: border-color 0.18s ease, box-shadow 0.18s ease !important;
     }
-    [data-testid="stDateInput"] [data-baseweb="input"]:hover,
-    [data-testid="stDateInput"] > div > div:hover {
+    /* Elemen dalam (base-input & wrappernya) -> TANPA border/shadow/bg
+       supaya tidak terjadi outline bertumpuk (double outline). */
+    [data-testid="stDateInput"] [data-baseweb="base-input"],
+    [data-testid="stDateInput"] [data-baseweb="input"] > div {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+    [data-testid="stDateInput"] [data-baseweb="input"]:hover {
         border-color: #4A6CF7 !important;
         box-shadow: 0 4px 16px rgba(37, 99, 235, 0.16) !important;
     }
-    [data-testid="stDateInput"] [data-baseweb="input"]:focus-within,
-    [data-testid="stDateInput"] > div > div:focus-within {
+    [data-testid="stDateInput"] [data-baseweb="input"]:focus-within {
         border-color: #4A6CF7 !important;
         box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.18) !important;
     }
