@@ -2927,19 +2927,23 @@ def page_detail_wilayah(data):
                         kat2 = p["kategori"]
                         warna = KATEGORI_INFO.get(kat2, KATEGORI_INFO["Sedang"])["warna"]
                         tanggal = d.strftime("%d %b %Y")
-                        rows_html += f"""
-                        <div class='pred-row'>
-                            <div class='pred-date'>{tanggal}</div>
-                            <div><span class='pred-pill' style='background:{warna};'>{p["ispu"]}</span></div>
-                            <div class='pred-cat' style='color:{warna};'>{kat2}</div>
-                            <div class='pred-pm'>PM2.5 ({p["pm25"]} µg/m³)</div>
-                        </div>
-                        """
+                        # Dibangun TANPA newline/indentasi -> markdown tidak salah
+                        # mengira ini code block (penyebab HTML tampil mentah).
+                        rows_html += (
+                            "<div class='pred-row'>"
+                            f"<div class='pred-date'>{tanggal}</div>"
+                            "<div>"
+                            f"<span class='pred-pill' style='background:{warna};'>"
+                            f"{p['ispu']}</span></div>"
+                            f"<div class='pred-cat' style='color:{warna};'>{kat2}</div>"
+                            f"<div class='pred-pm'>PM2.5 ({p['pm25']} µg/m³)</div>"
+                            "</div>"
+                        )
                     # List dibungkus flex-column space-between -> baris terdistribusi
                     # memenuhi tinggi card (tanpa whitespace besar di bawah).
                     st.markdown(
-                        f"<div style='height:{DETAIL_ROW_H - 78}px; display:flex; "
-                        f"flex-direction:column; justify-content:space-between;'>"
+                        f"<div style='height:{DETAIL_ROW_H - 78}px;display:flex;"
+                        f"flex-direction:column;justify-content:space-between;'>"
                         f"{rows_html}</div>",
                         unsafe_allow_html=True,
                     )
