@@ -29,6 +29,8 @@ import plotly.graph_objects as go
 import folium
 from folium.plugins import Fullscreen
 from streamlit_folium import st_folium
+import streamlit.components.v1 as components
+from branca.element import Figure
 from streamlit_option_menu import option_menu
 import joblib
 
@@ -363,8 +365,11 @@ def inject_css():
         box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
     }
 
-    /* Map container — rounded corners untuk iframe folium */
-    iframe[title="streamlit_folium.st_folium"] {
+    /* Map container — rounded corners untuk iframe folium.
+       st_folium pakai title khusus; components.html (Figure) pakai srcdoc.
+       Keduanya distyle supaya sudut membulat & ada border halus. */
+    iframe[title="streamlit_folium.st_folium"],
+    iframe[srcdoc] {
         border-radius: 12px;
         border: 1px solid #EEF2F7;
     }
@@ -2411,11 +2416,18 @@ def page_dashboard(data):
                     ).add_to(m)
                 if bounds:
                     m.fit_bounds(bounds, padding=(30, 30))
-                # Tinggi peta disamakan dengan kolom kanan (daftar status +
-                # legend) supaya tepi bawah peta sejajar dengan item legend
-                # "Berbahaya (>301)", persis seperti desain Figma.
-                st_folium(m, height=390, use_container_width=True,
-                          returned_objects=[])
+                # PENTING: st_folium + use_container_width membuat tinggi tile
+                # leaflet mengikuti RASIO ASPEK lebar kolom (±60% × lebar ≈
+                # 300px), BUKAN parameter height -> menyisakan ruang putih di
+                # bawah frame. Solusinya: bungkus map ke branca.Figure dengan
+                # tinggi tetap (px) lalu render via components.html. Karena
+                # html/body figure ber-height:100%, tile leaflet mengisi PENUH
+                # tinggi frame. MAP_H disetel agar tepi bawah peta sejajar
+                # dengan item legend "Berbahaya (>301)" di kolom kanan.
+                MAP_H = 372
+                fig = Figure(width="100%", height=f"{MAP_H}px")
+                fig.add_child(m)
+                components.html(fig.render(), height=MAP_H, scrolling=False)
 
             with mc2:
                 # Daftar status kualitas udara per wilayah (warna sesuai kategori)
