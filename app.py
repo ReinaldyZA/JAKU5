@@ -2907,12 +2907,14 @@ def page_detail_wilayah(data):
 
             st.markdown("<div style='margin-top:19px;'></div>", unsafe_allow_html=True)
 
-            # Prediksi + Tren
+            # Prediksi + Tren — pola SAMA dengan Dashboard: kedua card diberi
+            # tinggi tetap yang SAMA supaya sejajar & bottom-aligned.
+            DETAIL_ROW_H = 440
             pc1, pc2 = st.columns([1, 1.4], gap="medium")
 
             # Prediksi 7 hari
             with pc1:
-                with st.container(border=True):
+                with st.container(border=True, height=DETAIL_ROW_H):
                     st.markdown(
                         f"<div class='card-title'>Prediksi ISPU di {wilayah} (7 Hari Mendatang)</div>",
                         unsafe_allow_html=True,
@@ -2933,11 +2935,18 @@ def page_detail_wilayah(data):
                             <div class='pred-pm'>PM2.5 ({p["pm25"]} µg/m³)</div>
                         </div>
                         """
-                    st.markdown(rows_html, unsafe_allow_html=True)
+                    # List dibungkus flex-column space-between -> baris terdistribusi
+                    # memenuhi tinggi card (tanpa whitespace besar di bawah).
+                    st.markdown(
+                        f"<div style='height:{DETAIL_ROW_H - 78}px; display:flex; "
+                        f"flex-direction:column; justify-content:space-between;'>"
+                        f"{rows_html}</div>",
+                        unsafe_allow_html=True,
+                    )
 
             # Tren 7 hari (data dummy diolah per wilayah)
             with pc2:
-                with st.container(border=True):
+                with st.container(border=True, height=DETAIL_ROW_H):
                     st.markdown(
                         f"<div class='card-title'>Tren ISPU di {wilayah} (7 Hari Terakhir)</div>",
                         unsafe_allow_html=True,
@@ -2961,12 +2970,13 @@ def page_detail_wilayah(data):
                         textposition="top center",
                         textfont=dict(size=11, color="#0F172A", weight=600),
                         line=dict(color="#2563EB", width=3, shape="spline", smoothing=1.0),
-                        marker=dict(size=8, color="#2563EB", line=dict(color="white", width=2)),
+                        marker=dict(size=9, color="#2563EB", line=dict(color="white", width=2)),
                         fill="tozeroy",
                         fillcolor="rgba(37, 99, 235, 0.08)",
                         hovertemplate="<b>%{x}</b><br>ISPU: %{y}<extra></extra>",
                         showlegend=False,
                     ))
+                    # Garis + label threshold kategori — identik dengan Dashboard.
                     for nilai, label, warna in [
                         (50, "Baik", "#16A34A"),
                         (100, "Sedang", "#2563EB"),
@@ -2974,6 +2984,8 @@ def page_detail_wilayah(data):
                         (200, "Sangat Tidak Sehat", "#EF4444"),
                         (300, "Berbahaya", "#7C3AED"),
                     ]:
+                        fig.add_hline(y=nilai, line_dash="dot",
+                                      line_color="#E2E8F0", line_width=1)
                         fig.add_annotation(
                             x=1.0, xref="paper", y=nilai,
                             text=label, showarrow=False,
@@ -2982,15 +2994,16 @@ def page_detail_wilayah(data):
                             xshift=8,
                         )
                     fig.update_layout(
-                        height=300,
-                        margin=dict(l=20, r=120, t=20, b=20),
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        plot_bgcolor="rgba(0,0,0,0)",
-                        xaxis=dict(showgrid=False, showline=False, tickfont=dict(size=11, color="#64748B")),
+                        height=340,
+                        margin=dict(l=40, r=140, t=50, b=30),
+                        paper_bgcolor="white", plot_bgcolor="white",
+                        xaxis=dict(
+                            showgrid=False, showline=False,
+                            tickfont=dict(size=11, color="#64748B"),
+                            range=[-0.4, 6.4],
+                        ),
                         yaxis=dict(
-                            range=[0, 310],
-                            gridcolor="#F1F5F9",
-                            showline=False,
+                            range=[0, 320], gridcolor="#F1F5F9", showline=False,
                             tickfont=dict(size=11, color="#94A3B8"),
                             tickvals=[0, 50, 100, 150, 200, 250, 300],
                         ),
