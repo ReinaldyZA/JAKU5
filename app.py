@@ -2050,6 +2050,29 @@ def get_selected_date():
     return st.session_state["sel_tanggal"]
 
 
+# ── Format tanggal Bahasa Indonesia ──
+BULAN_ID = {
+    1: "Januari", 2: "Februari", 3: "Maret", 4: "April", 5: "Mei", 6: "Juni",
+    7: "Juli", 8: "Agustus", 9: "September", 10: "Oktober", 11: "November",
+    12: "Desember",
+}
+BULAN_ID_SINGKAT = {
+    1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "Mei", 6: "Jun",
+    7: "Jul", 8: "Agu", 9: "Sep", 10: "Okt", 11: "Nov", 12: "Des",
+}
+
+
+def tgl_id(d, singkat=False):
+    """Format tanggal Bahasa Indonesia, mis. '15 Juni 2024' / '15 Jun 2024'."""
+    bulan = (BULAN_ID_SINGKAT if singkat else BULAN_ID)[d.month]
+    return f"{d.day:02d} {bulan} {d.year}"
+
+
+def tgl_id_pendek(d):
+    """Tanggal + bulan singkat tanpa tahun, mis. '09 Jun' (label chart)."""
+    return f"{d.day:02d} {BULAN_ID_SINGKAT[d.month]}"
+
+
 def render_date_picker():
     """Date picker kalender (rentang sesuai CSV) di pojok kanan header.
     Memakai SATU key global sehingga sinkron di semua halaman."""
@@ -2276,7 +2299,7 @@ def page_dashboard(data):
             kat = dki_today["kategori"]
             info = KATEGORI_INFO[kat]
 
-            tgl_label = sel_tgl.strftime("%d %B %Y")
+            tgl_label = tgl_id(sel_tgl)
             st.markdown(
                 "<div class='card-title'>Kualitas Udara di Jakarta "
                 f"({tgl_label})</div>",
@@ -2615,7 +2638,7 @@ def page_dashboard(data):
                     continue
                 kat2 = p["kategori"]
                 warna = KATEGORI_INFO.get(kat2, KATEGORI_INFO["Sedang"])["warna"]
-                tanggal = d.strftime("%d %b %Y")
+                tanggal = tgl_id(d, singkat=True)
                 rows_html += (
                     "<div class='pred-row'>"
                     f"<div class='pred-date'>{tanggal}</div>"
@@ -2644,7 +2667,7 @@ def page_dashboard(data):
                 "tanggal": [pd.Timestamp(d) for d, _ in _pts],
                 "ispu": [p["ispu"] for _, p in _pts],
             })
-            df_tren["label_x"] = df_tren["tanggal"].dt.strftime("%d %b")
+            df_tren["label_x"] = df_tren["tanggal"].apply(tgl_id_pendek)
 
             fig = go.Figure()
             fig.add_trace(go.Scatter(
@@ -2824,7 +2847,7 @@ def page_detail_wilayah(data):
             with st.container(border=True):
                 st.markdown(
                     f"<div class='card-title'>Kualitas Udara {wilayah} "
-                    f"({sel_tgl.strftime('%d %B %Y')})</div>",
+                    f"({tgl_id(sel_tgl)})</div>",
                     unsafe_allow_html=True,
                 )
 
@@ -2926,7 +2949,7 @@ def page_detail_wilayah(data):
                             continue
                         kat2 = p["kategori"]
                         warna = KATEGORI_INFO.get(kat2, KATEGORI_INFO["Sedang"])["warna"]
-                        tanggal = d.strftime("%d %b %Y")
+                        tanggal = tgl_id(d, singkat=True)
                         # Dibangun TANPA newline/indentasi -> markdown tidak salah
                         # mengira ini code block (penyebab HTML tampil mentah).
                         rows_html += (
@@ -2964,7 +2987,7 @@ def page_detail_wilayah(data):
                         "tanggal": [pd.Timestamp(d) for d, _ in _pts],
                         "ispu_w": [p["ispu"] for _, p in _pts],
                     })
-                    df_tren["label_x"] = df_tren["tanggal"].dt.strftime("%d %b")
+                    df_tren["label_x"] = df_tren["tanggal"].apply(tgl_id_pendek)
 
                     fig = go.Figure()
                     fig.add_trace(go.Scatter(
