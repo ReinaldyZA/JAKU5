@@ -365,6 +365,53 @@ def inject_css():
         box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
     }
 
+    /* ============ MODAL "Informasi Polutan" (st.dialog) ============
+       Default width="large" membuat kotak modal kelebaran/penuh layar dan
+       top-aligned. Di-override: compact (max 720px), center vertikal &
+       horizontal, overlay gelap transparan, shadow halus, close button
+       minimalis. */
+    /* Overlay gelap transparan + blur ringan, dan center vertikal */
+    [data-testid="stDialog"] {
+        background: rgba(0, 0, 0, 0.35) !important;
+        backdrop-filter: blur(2px) !important;
+        align-items: center !important;
+    }
+    [data-testid="stDialog"] > div {
+        align-items: center !important;
+        padding-top: 2vh !important;
+        padding-bottom: 2vh !important;
+    }
+    /* Kotak modal: compact (bukan full-screen), rounded, padding rapi */
+    [data-testid="stDialog"] div[role="dialog"] {
+        width: min(720px, 94vw) !important;
+        max-width: 720px !important;
+        border-radius: 20px !important;
+        padding: 22px 26px 26px !important;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22) !important;
+        border: none !important;
+    }
+    /* Judul "Informasi Polutan" — bold, ringkas, tidak nabrak tombol close */
+    [data-testid="stDialog"] div[role="dialog"] h1,
+    [data-testid="stDialog"] div[role="dialog"] h2,
+    [data-testid="stDialog"] div[role="dialog"] h3 {
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        color: #0F172A !important;
+        padding-right: 34px !important;
+        line-height: 1.25 !important;
+    }
+    /* Tombol close: ikon X minimalis tanpa kotak outline, hover halus */
+    [data-testid="stDialog"] div[role="dialog"] button[aria-label="Close"] {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border-radius: 8px !important;
+        transition: background 0.15s ease !important;
+    }
+    [data-testid="stDialog"] div[role="dialog"] button[aria-label="Close"]:hover {
+        background: #F1F5F9 !important;
+    }
+
     /* Map container — rounded corners untuk iframe folium.
        st_folium pakai title khusus; components.html (Figure) pakai srcdoc.
        Keduanya distyle supaya sudut membulat & ada border halus. */
@@ -1984,39 +2031,30 @@ def render_popup_polutan():
     Popup "Informasi Polutan" - dipakai di Dashboard, Detail Wilayah,
     dan Simulasi Prediksi. Konten mengikuti gambar referensi POPUP.png.
     """
-    @st.dialog("Informasi Polutan", width="large")
+    @st.dialog("Informasi Polutan", width="small")
     def _popup():
-        st.markdown("""
-        <p style='color:#64748B; font-size:14px; margin-bottom:16px; margin-top:-8px;'>
-            Penjelasan singkat tiap polutan udara yang dipantau JakU.
-        </p>
-        """, unsafe_allow_html=True)
-
-        items = list(INFO_POLUTAN.items())
-        for i in range(0, len(items), 2):
-            cols = st.columns(2, gap="medium")
-            for j, col in enumerate(cols):
-                if i + j >= len(items):
-                    continue
-                nama, info = items[i + j]
-                with col:
-                    st.markdown(f"""
-                    <div style="
-                        background:#FFFFFF;
-                        border:1px solid #E2E8F0;
-                        border-radius:14px;
-                        padding:16px 18px;
-                        height:100%;
-                        min-height:130px;
-                    ">
-                      <div style="font-weight:700; font-size:16px; color:#0F172A; margin-bottom:7px;">
-                        {nama}
-                      </div>
-                      <div style="font-size:13px; color:#475569; line-height:1.5;">
-                        {info["deskripsi"]}
-                      </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+        # Subjudul ringkas
+        # Grid 2 kolom x 3 baris dibangun sebagai SATU blok HTML (bukan
+        # st.columns) supaya compact, spacing presisi, dan tidak ada wrapper
+        # kolom Streamlit yang menambah jarak.
+        cards = ""
+        for nama, info in INFO_POLUTAN.items():
+            cards += (
+                "<div style='border:1px solid #E5E7EB;border-radius:16px;"
+                "background:#FFFFFF;padding:18px;'>"
+                "<div style='color:#2563EB;font-weight:700;font-size:18px;"
+                f"margin-bottom:6px;'>{nama}</div>"
+                "<div style='color:#475569;font-size:13px;line-height:1.5;'>"
+                f"{info['deskripsi']}</div>"
+                "</div>"
+            )
+        st.markdown(
+            "<div style='color:#64748B;font-size:14px;margin:-4px 0 16px;'>"
+            "Penjelasan singkat tiap polutan udara yang dipantau JakU.</div>"
+            "<div style='display:grid;grid-template-columns:1fr 1fr;"
+            f"gap:16px;'>{cards}</div>",
+            unsafe_allow_html=True,
+        )
 
     _popup()
 
