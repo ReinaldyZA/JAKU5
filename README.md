@@ -4,6 +4,8 @@
 
 > **Pantau Udara, Jaga Jakarta**
 
+🔗 **Akses aplikasi (live demo):** https://jaku-dashboard5-reinzulfarkaan.streamlit.app/
+
 ---
 
 ## ✨ Fitur
@@ -141,6 +143,8 @@ git push -u origin main
    - **Branch:** `main`
    - **Main file path:** `app.py`
 4. **Deploy** — tunggu beberapa menit hingga aplikasi online di `https://<nama-app>.streamlit.app/`
+
+> Aplikasi ini sudah ter-deploy dan dapat diakses di: **https://jaku-dashboard5-reinzulfarkaan.streamlit.app/**
 
 ### 3. Update setelah perubahan
 
