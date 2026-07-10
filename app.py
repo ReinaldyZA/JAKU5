@@ -1102,42 +1102,45 @@ def inject_css():
     }
 
     /* ============ TABS WILAYAH ============ */
+    /* Gaya teks polos dengan garis bawah pada tab aktif (tanpa pill & ikon). */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
+        gap: 28px;
         border-bottom: none;
         flex-wrap: wrap;
+        margin-bottom: 8px;
     }
     .stTabs [data-baseweb="tab"] {
         display: inline-flex !important;
         align-items: center;
-        background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 10px 20px;
-        font-weight: 600;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0;
+        padding: 8px 2px 10px;
+        font-weight: 500;
         color: #64748B;
         font-size: 14px;
+        box-shadow: none !important;
+        position: relative;
     }
-    /* Ikon status (penunjuk) di kiri label tiap wilayah — sesuai desain Figma.
-       inline-block + vertical-align agar ukuran 16x16 selalu berlaku
-       (elemen inline biasa mengabaikan width/height). Gambar per-wilayah
-       disuntik dinamis di page_detail_wilayah(). */
-    .stTabs [data-baseweb="tab"]::before {
-        content: "";
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-right: 8px;
-        vertical-align: middle;
-        flex-shrink: 0;
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: contain;
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #2563EB;
+        background-color: transparent !important;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #DBEAFE !important;
+        background-color: transparent !important;
         color: #2563EB !important;
-        border-color: #BFDBFE !important;
+        font-weight: 600;
+    }
+    /* Garis bawah biru hanya selebar label tab yang aktif */
+    .stTabs [aria-selected="true"]::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 2px;
+        border-radius: 2px;
+        background-color: #2563EB;
     }
     .stTabs [data-baseweb="tab-highlight"] { display: none; }
     .stTabs [data-baseweb="tab-border"] { display: none; }
@@ -2817,29 +2820,6 @@ def page_detail_wilayah(data):
 
     # Tabs wilayah
     wilayah_list = data["wilayah"]["wilayah"].tolist()
-
-    # Ikon penunjuk per-wilayah (SVG Figma) ditanam langsung sebagai base64,
-    # lalu disuntik ke tiap pill tab berdasarkan urutannya. Tidak bergantung
-    # pada file di folder assets/ sehingga selalu tampil.
-    _ICON_B64 = {
-        "Jakarta Pusat":   "PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iOCIgY3k9IjgiIHI9IjgiIGZpbGw9IiMxOUFFNUQiLz4KPC9zdmc+Cg==",
-        "Jakarta Utara":   "PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxNiAxNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEzLjY1NyAtMC4wMDAxNTc0OTZDMTQuNzc1OCAxLjExODY3IDE1LjUzNzcgMi41NDQxNCAxNS44NDY0IDQuMDk2QzE2LjE1NTEgNS42NDc4NiAxNS45OTY2IDcuMjU2NDEgMTUuMzkxMSA4LjcxODIzQzE0Ljc4NTYgMTAuMTggMTMuNzYwMyAxMS40Mjk1IDEyLjQ0NDcgMTIuMzA4NUMxMS4xMjkxIDEzLjE4NzYgOS41ODIzOSAxMy42NTY4IDguMDAwMTUgMTMuNjU2OEM2LjQxNzkxIDEzLjY1NjggNC44NzEyIDEzLjE4NzYgMy41NTU2MiAxMi4zMDg1QzIuMjQwMDQgMTEuNDI5NSAxLjIxNDY2IDEwLjE4IDAuNjA5MTY2IDguNzE4MjNDMC4wMDM2Njk3NyA3LjI1NjQxIC0wLjE1NDc1NiA1LjY0Nzg2IDAuMTUzOTI0IDQuMDk2QzAuNDYyNjAzIDIuNTQ0MTQgMS4yMjQ1MiAxLjExODY3IDIuMzQzMzQgLTAuMDAwMTU3NDk2TDguMDAwMTUgNS42NTY3NEwxMy42NTcgLTAuMDAwMTU3NDk2WiIgZmlsbD0iIzE5QUU1RCIvPgo8L3N2Zz4K",
-        "Jakarta Barat":   "PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTggMC4wMDAxMTk3MzVDOS41ODIyNSAwLjAwMDE0MzIyNyAxMS4xMjkgMC40NjkzNTggMTIuNDQ0NiAxLjM0ODQzQzEzLjc2MDIgMi4yMjc1IDE0Ljc4NTUgMy40NzY5NCAxNS4zOTEgNC45Mzg3NkMxNS45OTY1IDYuNDAwNTggMTYuMTU1IDguMDA5MTEgMTUuODQ2MyA5LjU2MDk2QzE1LjUzNzYgMTEuMTEyOCAxNC43NzU3IDEyLjUzODMgMTMuNjU2OSAxMy42NTcxQzEyLjUzOCAxNC43NzU5IDExLjExMjYgMTUuNTM3OCA5LjU2MDcyIDE1Ljg0NjRDOC4wMDg4NyAxNi4xNTUxIDYuNDAwMzQgMTUuOTk2NiA0LjkzODUzIDE1LjM5MTFDMy40NzY3MiAxNC43ODU2IDIuMjI3MjkgMTMuNzYwMiAxLjM0ODI0IDEyLjQ0NDZDMC40NjkxOTIgMTEuMTI5IDUuNzY2MjdlLTA4IDkuNTgyMjUgOS41Mzk5ZS0wOCA4TDggOC4wMDAxMkw4IDAuMDAwMTE5NzM1WiIgZmlsbD0iIzE5QUU1RCIvPgo8L3N2Zz4K",
-        "Jakarta Selatan": "PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxNiAxNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIuMzQzIDEzLjY1NjhDMS4yMjQyIDEyLjUzNzkgMC40NjIyODUgMTEuMTEyNSAwLjE1MzYxOCA5LjU2MDU5Qy0wLjE1NTA1MSA4LjAwODczIDAuMDAzMzg3OTEgNi40MDAxOCAwLjYwODg5NSA0LjkzODM3QzEuMjE0NCAzLjQ3NjU1IDIuMjM5NzggMi4yMjcxMiAzLjU1NTM3IDEuMzQ4MDhDNC44NzA5NiAwLjQ2OTAyOCA2LjQxNzY3IC0wLjAwMDE1NTgxNiA3Ljk5OTkxIC0wLjAwMDE0Mzc3N0M5LjU4MjE1IC0wLjAwMDEzMTgyMyAxMS4xMjg5IDAuNDY5MDc1IDEyLjQ0NDQgMS4zNDgxNEMxMy43NiAyLjIyNzIxIDE0Ljc4NTQgMy40NzY2NiAxNS4zOTA5IDQuOTM4NDhDMTUuOTk2MyA2LjQwMDMgMTYuMTU0OCA4LjAwODg1IDE1Ljg0NjEgOS41NjA3MUMxNS41Mzc0IDExLjExMjYgMTQuNzc1NCAxMi41MzggMTMuNjU2NiAxMy42NTY5TDcuOTk5ODUgNy45OTk5MkwyLjM0MyAxMy42NTY4WiIgZmlsbD0iIzE5QUU1RCIvPgo8L3N2Zz4K",
-        "Jakarta Timur":   "PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNCAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEzLjY1NjggMTMuNjU3QzEyLjUzNzkgMTQuNzc1OCAxMS4xMTI1IDE1LjUzNzcgOS41NjA1OSAxNS44NDY0QzguMDA4NzMgMTYuMTU1MSA2LjQwMDE5IDE1Ljk5NjYgNC45MzgzNyAxNS4zOTExQzMuNDc2NTYgMTQuNzg1NiAyLjIyNzEzIDEzLjc2MDIgMS4zNDgwOCAxMi40NDQ2QzAuNDY5MDI5IDExLjEyOSAtMC4wMDAxNTQ3MjkgOS41ODIzMyAtMC4wMDAxNDI4MjQgOC4wMDAwOUMtMC4wMDAxMzEwMDIgNi40MTc4NSAwLjQ2OTA3NiA0Ljg3MTE1IDEuMzQ4MTQgMy41NTU1N0MyLjIyNzIxIDIuMjM5OTkgMy40NzY2NiAxLjIxNDYzIDQuOTM4NDggMC42MDkxNDRDNi40MDAzMSAwLjAwMzY1NzkxIDguMDA4ODUgLTAuMTU0NzU2IDkuNTYwNzEgMC4xNTM5MzVDMTEuMTEyNiAwLjQ2MjYyNiAxMi41MzggMS4yMjQ1NiAxMy42NTY5IDIuMzQzMzhMNy45OTk5MiA4LjAwMDE1TDEzLjY1NjggMTMuNjU3WiIgZmlsbD0iIzE5QUU1RCIvPgo8L3N2Zz4K",
-        "Kep. Seribu":     "PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNCAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTAuMDAwNDU1MjQgMi4zNDNDMS4xMTkyOSAxLjIyNDIgMi41NDQ3NyAwLjQ2MjI4NiA0LjA5NjYzIDAuMTUzNjE4QzUuNjQ4NDkgLTAuMTU1MDUxIDcuMjU3MDQgMC4wMDMzODc2NCA4LjcxODg1IDAuNjA4ODk0QzEwLjE4MDcgMS4yMTQ0IDExLjQzMDEgMi4yMzk3OCAxMi4zMDkxIDMuNTU1MzdDMTMuMTg4MiA0Ljg3MDk2IDEzLjY1NzQgNi40MTc2NyAxMy42NTc0IDcuOTk5OTFDMTMuNjU3NCA5LjU4MjE1IDEzLjE4ODEgMTEuMTI4OSAxMi4zMDkxIDEyLjQ0NDRDMTEuNDMgMTMuNzYgMTAuMTgwNiAxNC43ODU0IDguNzE4NzUgMTUuMzkwOUM3LjI1NjkyIDE1Ljk5NjMgNS42NDgzOCAxNi4xNTQ4IDQuMDk2NTIgMTUuODQ2MUMyLjU0NDY2IDE1LjUzNzQgMS4xMTkxOSAxNC43NzU0IDAuMDAwMzcyMjcgMTMuNjU2Nkw1LjY1NzMxIDcuOTk5ODVMMC4wMDA0NTUyNCAyLjM0M1oiIGZpbGw9IiMxOUFFNUQiLz4KPC9zdmc+Cg==",
-    }
-    icon_css = "<style>"
-    for i, w in enumerate(wilayah_list, start=1):
-        b64 = _ICON_B64.get(w, "")
-        if b64:
-            icon_css += (
-                f'.stTabs [data-baseweb="tab"]:nth-of-type({i})::before,'
-                f'.stTabs [data-baseweb="tab"]:nth-child({i})::before{{'
-                f'background-image:url("data:image/svg+xml;base64,{b64}");}}'
-            )
-    icon_css += "</style>"
-    st.markdown(icon_css, unsafe_allow_html=True)
 
     tabs = st.tabs(wilayah_list)
 
