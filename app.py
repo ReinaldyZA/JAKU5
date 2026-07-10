@@ -1102,27 +1102,44 @@ def inject_css():
     }
 
     /* ============ TABS WILAYAH ============ */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
+    /* Streamlit lama memakai BaseWeb ([data-baseweb="tab"]), Streamlit >= 1.5x
+       memakai react-aria ([data-testid="stTab"], [data-selected]). Kedua
+       selektor ditulis agar tampilan pill tetap muncul di versi mana pun. */
+    .stTabs [data-baseweb="tab-list"],
+    .stTabs [role="tablist"] {
+        gap: 10px !important;
         border-bottom: none;
         flex-wrap: wrap;
+        overflow: visible !important;
     }
-    .stTabs [data-baseweb="tab"] {
+    /* Garis abu bawaan di bawah baris tab (pseudo ::after milik tab-list) */
+    .stTabs [role="tablist"]::after {
+        background-color: transparent !important;
+    }
+    /* Garis bawah biru bawaan pada tab aktif */
+    .stTabs .react-aria-SelectionIndicator { display: none !important; }
+    .stTabs [data-baseweb="tab-highlight"] { display: none; }
+    .stTabs [data-baseweb="tab-border"] { display: none; }
+
+    .stTabs [data-baseweb="tab"],
+    .stTabs [data-testid="stTab"] {
         display: inline-flex !important;
         align-items: center;
-        background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 10px 20px;
+        height: auto !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 8px !important;
+        padding: 10px 20px !important;
         font-weight: 600;
-        color: #64748B;
+        color: #64748B !important;
         font-size: 14px;
     }
     /* Ikon status (penunjuk) di kiri label tiap wilayah — sesuai desain Figma.
        inline-block + vertical-align agar ukuran 16x16 selalu berlaku
        (elemen inline biasa mengabaikan width/height). Gambar per-wilayah
        disuntik dinamis di page_detail_wilayah(). */
-    .stTabs [data-baseweb="tab"]::before {
+    .stTabs [data-baseweb="tab"]::before,
+    .stTabs [data-testid="stTab"]::before {
         content: "";
         display: inline-block;
         width: 16px;
@@ -1134,13 +1151,17 @@ def inject_css():
         background-position: center;
         background-size: contain;
     }
-    .stTabs [aria-selected="true"] {
+    .stTabs [data-baseweb="tab"][aria-selected="true"],
+    .stTabs [data-testid="stTab"][aria-selected="true"],
+    .stTabs [data-testid="stTab"][data-selected] {
         background-color: #DBEAFE !important;
         color: #2563EB !important;
         border-color: #BFDBFE !important;
     }
-    .stTabs [data-baseweb="tab-highlight"] { display: none; }
-    .stTabs [data-baseweb="tab-border"] { display: none; }
+    .stTabs [data-testid="stTab"]:hover {
+        color: #2563EB !important;
+        border-color: #BFDBFE !important;
+    }
 
     /* ============ BUTTONS ============ */
     .stButton > button {
@@ -2835,7 +2856,9 @@ def page_detail_wilayah(data):
         if b64:
             icon_css += (
                 f'.stTabs [data-baseweb="tab"]:nth-of-type({i})::before,'
-                f'.stTabs [data-baseweb="tab"]:nth-child({i})::before{{'
+                f'.stTabs [data-baseweb="tab"]:nth-child({i})::before,'
+                f'.stTabs [data-testid="stTab"]:nth-of-type({i})::before,'
+                f'.stTabs [data-testid="stTab"]:nth-child({i})::before{{'
                 f'background-image:url("data:image/svg+xml;base64,{b64}");}}'
             )
     icon_css += "</style>"
